@@ -2,10 +2,8 @@ var app = require('http').createServer(response);
 var fs = require('fs');
 var io = require('socket.io')(app);
 var ids = []
-var queue = ""
 var games = []
 var sockets = []
-
 /*app.get('/', function(req, res){
   console.log(req.url)
   try {
@@ -21,7 +19,7 @@ var sockets = []
 async function response(req, res) {
     var file = "";
     if (req.url === "/") {
-        file = __dirname + "/game.html"
+        file = __dirname + "/index.html"
     } else {
         file = __dirname + req.url;
     }
@@ -43,105 +41,146 @@ async function response(req, res) {
 app.listen(process.env.PORT || 3000);
 io.on('connection', function (socket) {
     sockets.push(socket)
-
     ids.push(socket.id)
     socket.on('disconnect', function() {
-        var currentGame = findObjectByKey(games, "p1", socket.id) || findObjectByKey(games, "p2", socket.id)
-        if(currentGame) {
-            if(socket.id === currentGame.p1) {
-                io.to(`${currentGame.p2}`).emit("oppdisconnect")
+        var game = getGameBySocketId(socket.id)
+        if(game) {
+            var player = getPlayerById(socket.id)
+            if(game.inGame) {
+                gameEmit(game, "alert", player.username + " left. Party's over.")
+                games.splice(games.indexOf(game), 1)
             } else {
-                io.to(`${currentGame.p1}`).emit("oppdisconnect")
+                if(player.team === "judge") {
+                    gameEmit(game, "alert", "Host left the game, please reload.")
+                    games.splice(games.indexOf(game), 1)
+                } else if(game["team" + player.team].p1.id === player.id) {
+                    game["team" + player.team].p1 = {}
+                    gameEmit(game, "joinedGame", game)
+                    gameEmit(game, "chatUpdate", player.username + " left the game.")
+                } else {
+                    game["team" + player.team].p2 = {}
+                    gameEmit(game, "joinedGame", game)
+                    gameEmit(game, "chatUpdate", player.username + " left the game.")
+                }
             }
-            games.splice(games.indexOf(currentGame), 1)
         }
-        if(queue === socket.id) {
-            queue = ""
-        }
-        var p = ids.indexOf(socket.id);
-        sockets.splice(p, 1)
-        var i = sockets.indexOf(socket);
-        sockets.splice(i, 1);
     });
-    socket.on("startQueue", function () {
-
-        if (queue === "" || queue === socket.id) {
-            queue = socket.id;
-            //console.log(queue)
-            //console.log(ids)
-            socket.emit("queueing")
+    socket.on("gamemsg", function(msg, callback)  {
+        var game = getGameBySocketId(socket.id)
+        if(game && msg !== "") {
+            var player = getPlayerById(socket.id)
+            var filteredmsg = msg.replace(/\</g, "&lt;");   //for <
+            filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
+            filteredmsg = "<b>" + player.username + ":</b> " + filteredmsg;
+            gameEmit(game, "chatUpdate", filteredmsg)
+            callback()
+        }
+    })
+    socket.on("createGame", function(name) {
+        if(name.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
+            var game = getGameBySocketId(socket.id)
+            if (!game) {
+                var newPlayer = {
+                    username: name,
+                    id: socket.id,
+                    team: "judge"
+                }
+                var newTeam1 = {
+                    p1: {},
+                    p2: {},
+                    paths: [],
+                    timeout: 60000,
+                    turn: 1,
+                    ink: 500,
+                    score: 0
+                }
+                var newTeam2 = {
+                    p1: {},
+                    p2: {},
+                    paths: [],
+                    timeout: 60000,
+                    turn: 1,
+                    ink: 500,
+                    score: 0
+                }
+                var newGame = {
+                    team1: newTeam1,
+                    team2: newTeam2,
+                    judge: newPlayer,
+                    round: 1,
+                    subject: "",
+                    hidden: false,
+                    inGame: false,
+                    id: getUniqueGameId()
+                }
+                games.push(newGame)
+                console.log(JSON.stringify(newGame))
+                socket.emit("joinedGame", newGame)
+            } else {
+                socket.emit("alert", "Already in a game. Reload to exit.")
+            }
         } else {
-            var otherUser = queue
-            queue = ""
-            var newGame = {
-                p1: socket.id,
-                p2: otherUser,
-                p1score: 0,
-                p2score: 0,
-                targetX: getRandomInt(50, 280),
-                targetY: getRandomInt(50, 280),
-                timeRemaining: 60000
-            }
-            var timer = setInterval(function() {
-                var tempGame = findObjectByKey(games, "p1", findObjectByKey(games, "p1", socket.id).p1)
-                tempGame.timeRemaining -= 1000
-                socket.emit("update", tempGame, findObjectByKey(games, "p1", socket.id).p1)
-                io.to(`${tempGame.p2}`).emit("update", tempGame, tempGame.p2)
-                if(tempGame.timeRemaining <= 0) {
-                    finishGame(newGame.p1)
-                    clearInterval(timer)
-                }
-            }, 1000)
-            games.push(newGame)
-            socket.emit("joinedGame", newGame, socket.id)
-            //console.log(otherUser)
-            //console.log(sockets)
-            io.to(`${otherUser}`).emit("joinedGame", newGame, otherUser)
+            socket.emit("alert", "Bad username. Try again.")
         }
+    })
+    socket.on("joinGame", function(id, name) {
+        var gameExists = getGameBySocketId(socket.id)
+        if(name.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
+            if (!gameExists) {
+                if (findObjectByKey(games, "id", parseInt(id)) && gameNameTaken(name, findObjectByKey(games, "id", parseInt(id))) === false) {
+                    var game = findObjectByKey(games, "id", parseInt(id))
+                    var playercount = 1
+                    for (var x = 0; x < getPlayers(game); x++) {
+                        if (!isEmpty(getPlayers(game)[x])) {
+                            playercount++
+                        }
+                    }
+                    if (playercount !== 5) {
+                        var newPlayer = {
+                            username: name,
+                            id: socket.id,
+                            team: 0
+                        }
+                        console.log(teamFilled(game.team1))
+                        if (!teamFilled(game.team1)) {
+                            newPlayer.team = 1
+                            if (isEmpty(game.team1.p1)) {
+                                console.log(game.team1)
+                                console.log(game.team2)
+                                game.team1.p1 = newPlayer
+                                console.log(game.team1)
+                                console.log(game.team2)
+                            } else {
+                                game.team1.p2 = newPlayer
+                            }
+                        } else {
+                            newPlayer.team = 2
+                            if (isEmpty(game.team2.p1)) {
+                                game.team2.p1 = newPlayer
+                            } else {
+                                game.team2.p2 = newPlayer
+                            }
+                        }
 
-    })
-    socket.on("clicked", function(mouseX, mouseY) {
-        var currentGame = findObjectByKey(games, "p1", socket.id) || findObjectByKey(games, "p2", socket.id)
-        if(currentGame) {
-            var clickedPlayer
-            var clickedPlayerNum = 0;
-            if(findObjectByKey(games, "p1", socket.id)) {
-                clickedPlayer = findObjectByKey(games, "p1", socket.id).p1
-                clickedPlayerNum = 1
-            } else {
-                clickedPlayer = findObjectByKey(games, "p2", socket.id).p2
-                clickedPlayerNum = 2
-            }
-            var square = generateSquareWithCenter(currentGame.targetX, currentGame.targetY, 15)
-            if(mouseX >= square.x1 && mouseY >= square.y1 && mouseX <= square.x2 && mouseY <= square.y2) {
-                //console.log("wow")
-                currentGame.targetX = getRandomInt(50, 280)
-                currentGame.targetY = getRandomInt(50, 280)
-                if(clickedPlayerNum === 1) {
-                    currentGame.p1score ++
-                    io.to(`${currentGame.p2}`).emit("update", currentGame, currentGame.p2)
+
+                        console.log(game)
+                        gameEmit(game, "joinedGame", game)
+                        gameEmit(game, "chatUpdate", newPlayer.username + " joined the game.")
+                    } else {
+                        socket.emit("alert", "Game is full.")
+                    }
                 } else {
-                    currentGame.p2score ++
-                    io.to(`${currentGame.p1}`).emit("update", currentGame, currentGame.p1)
+                    socket.emit("alert", "Game doesn't exist or username taken.")
                 }
-                socket.emit("update", currentGame, clickedPlayer)
             } else {
-                if(clickedPlayerNum === 1) {
-                    currentGame.p1score --
-                    io.to(`${currentGame.p2}`).emit("update", currentGame, currentGame.p2)
-                } else {
-                    currentGame.p2score --
-                    io.to(`${currentGame.p1}`).emit("update", currentGame, currentGame.p1)
-                }
-                socket.emit("update", currentGame, clickedPlayer)
+                socket.emit("alert", "Already in a game. Reload to exit.")
             }
+        } else {
+            socket.emit("alert", "Bad username. Try again.")
         }
     })
+
 });
-
-/*http.listen(process.env.PORT || 3000, function(){
-  console.log('listening on *:3000');
-});*/
 function findObjectByKey(array, key, value) {
     for (var i = 0; i < array.length; i++) {
         if (array[i][key] === value) {
@@ -183,4 +222,72 @@ function finishGame(p1) {
     io.to(`${currentGame.p2}`).emit("gameover", gameoverdata, currentGame.p2)
     games.splice(games.indexOf(currentGame), 1)
 
+}
+function getUniqueGameId() {
+    var foundId = false
+    var id
+    while(!foundId) {
+        var tempId = getRandomInt(100000, 999999)
+        if(!findObjectByKey(games, "id", tempId)) {
+            id = tempId
+            foundId = true
+        }
+    }
+    return id
+}
+function gameNameTaken(name, game) {
+    var players = getPlayers(game)
+    var names = []
+    for(var x = 0; x < players.length; x++) {
+        names.push(players[x].username)
+    }
+    return names.includes(name);
+}
+function getPlayers(game) {
+    var players = []
+    players.push(game.judge)
+    players.push(game.team1.p1)
+    players.push(game.team1.p2)
+    players.push(game.team2.p1)
+    players.push(game.team2.p2)
+    return players
+}
+function teamFilled(team) {
+    return !isEmpty(team.p1) && !isEmpty(team.p2);
+}
+function isEmpty(obj) {
+    return Object.keys(obj).length === 0;
+}
+function getGameBySocketId(id) {
+    for(var x = 0; x < games.length; x++) {
+        var game = games[x]
+        var players = getPlayers(game)
+        for(var x = 0; x < players.length; x++) {
+            if(!isEmpty(players[x]) && players[x].id === id) {
+                return game
+            }
+        }
+    }
+    return null
+}
+function getPlayerById(id) {
+    var game = getGameBySocketId(id)
+    if(game) {
+        var players = getPlayers(game)
+        for(var x = 0; x < players.length; x++) {
+            if(!isEmpty(players[x]) && players[x].id === id) {
+                return players[x]
+            }
+        }
+    } else {
+        return null
+    }
+}
+function gameEmit(game, toEmit, args) {
+    var players = getPlayers(game)
+    for (var x = 0; x < players.length; x++) {
+        if (!isEmpty(players[x])) {
+            io.to(`${players[x].id}`).emit(toEmit, args)
+        }
+    }
 }

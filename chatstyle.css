@@ -1,0 +1,32 @@
+form {
+    margin: 15px 0;
+}
+
+form input[type='text'] {
+    border: 2px solid #eb5424;
+    border-radius: 5px;
+    padding: 5px;
+    /*width: 75%;*/
+}
+
+form input[type='submit'] {
+    background: #eb5424;
+    border: none;
+    border-radius: 5px;
+    color: #FFF;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 7px 5px;
+    /*width: 19%;*/
+}
+
+#history {
+    background: #FFF;
+    border: 2px solid #eb5424;
+    width: 19%;
+    overflow: scroll;
+    /*height: 550px;*/
+}
+p {
+    margin:0px
+}
