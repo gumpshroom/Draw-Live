@@ -265,7 +265,7 @@ socket.on("gameStarted", function(game) {
     if(document.getElementById("startBtn")) {
         document.body.removeChild(document.getElementById("startBtn"))
     }
-
+    topic = game.topic
     var currentPlayer = getPlayerById(socket.id, game)
     document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game."
     if(currentPlayer.team !== "judge") {
@@ -284,7 +284,6 @@ socket.on("gameStarted", function(game) {
         seconds = game.timeout / 1000
         ink = game["team" + currentPlayer.team].ink
         turn = game["team" + currentPlayer.team].turn
-        topic = game.topic
         Swal.fire("Game started!", "You have 60 seconds to draw <b>" + game.topic + "</b> with your teammate, " + game["team" + currentPlayer.team]["p" + teamRole].username + "!")
     } else {
         playerRole = 'judge'
