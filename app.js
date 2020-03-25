@@ -119,7 +119,7 @@ io.on('connection', function (socket) {
                     topic: "",
                     hidden: false,
                     inGame: false,
-                    id: 1, //getUniqueGameId(),
+                    id: getUniqueGameId(),
                     finishRound: function() {
                         gameEmit(this, "roundOver", this)
                         this.timeout = 60000
