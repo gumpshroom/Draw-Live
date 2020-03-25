@@ -6,7 +6,12 @@ var cnv
 var center = "display: block; margin-right: auto; margin-left: auto;"
 var isInCanvas = false;
 var accent = "mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent"
-
+var seconds
+var inGame = false
+var playerRole
+var ink
+var turn
+var topic
 function setup() {
     cnv = createCanvas(640, 480);
     cnv.mouseOver(function () {
@@ -94,11 +99,33 @@ function setup() {
 }
 
 function draw() {
+
+    if(inGame && seconds !== undefined) {
+        //console.log(seconds)
+        fill(255)
+        noStroke()
+        rect(9, 0, 40, 40)
+        fill(0)
+        textSize(32)
+        text(seconds, 10, 30)
+    }
+    if(inGame && playerRole !== "judge") {
+        fill(255)
+        noStroke()
+        rect(499, 0, 100, 40)
+        fill(0)
+        textSize(32)
+        text("ink: " + ink, 500, 30)
+    }
+    if(inGame) {
+        textSize(20)
+        text("Draw " + topic + "!", 10, 450)
+    }
     chatWindow = document.getElementById('history');
     var xH = chatWindow.scrollHeight;
     chatWindow.scrollTo(0, xH);
     noFill();
-    if (mouseIsPressed && isInCanvas) {
+    if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
         const point = {
             x: mouseX,
             y: mouseY,
@@ -106,7 +133,9 @@ function draw() {
             weight: 3
         };
         currentPath.push(point);
+        ink --
     }
+    //console.log(paths)
     for (var x = 0; x < paths.length; x++) {
         var path = paths[x]
         if (path.length !== 0) {
@@ -126,8 +155,16 @@ function draw() {
 }
 
 function mousePressed() {
+
     currentPath = [];
     paths.push(currentPath);
+
+}
+function mouseReleased() {
+    if(inGame && currentPath.length !== 0) {
+        socket.emit("pathDrawn", currentPath)
+        console.log(currentPath)
+    }
 }
 function createGame() {
     var username
@@ -183,6 +220,9 @@ socket.on("alert", function(content) {
     Swal.fire(content)
 })
 socket.on("joinedGame", function(gameObj) {
+    if(document.getElementById("startBtn")) {
+        document.body.removeChild(document.getElementById("startBtn"))
+    }
     var gameInfo = document.getElementById("gameInfo")
     var members = 1
     var t1p1 = "nobody"
@@ -202,18 +242,100 @@ socket.on("joinedGame", function(gameObj) {
         members ++
     }
     if(!isEmpty(gameObj.team2.p2)) {
-        t2p2 = gameObj.team1.p2.username
+        t2p2 = gameObj.team2.p2.username
         members ++
     }
     gameInfo.innerText = "You're in game " + gameObj.id + " with " + members + " member(s). You need 5 to play."
     gameInfo.innerHTML += "<br>Judge: " + gameObj.judge.username + "<br>Team 1: " + t1p1 + " and " + t1p2 + "<br>Team 2: " + t2p1 + " and " + t2p2
-
+    if(members === 5 && gameObj.judge.id === socket.id) {
+        var startBtn = document.createElement("button")
+        startBtn.innerText = "Start"
+        startBtn.className = accent
+        startBtn.setAttribute("onclick", "startGame()")
+        startBtn.setAttribute("style", center)
+        document.body.appendChild(startBtn)
+    }
 })
 socket.on("chatUpdate", function(msg){
     var final_message = $("<p />").html(msg);
     $("#history").append(final_message);
 });
+socket.on("gameStarted", function(game) {
+    inGame = true
+    if(document.getElementById("startBtn")) {
+        document.body.removeChild(document.getElementById("startBtn"))
+    }
+
+    var currentPlayer = getPlayerById(socket.id, game)
+    document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game."
+    if(currentPlayer.team !== "judge") {
+        if (game["team" + currentPlayer.team].p1.id === socket.id) {
+            playerRole = 1
+        } else {
+            playerRole = 2
+        }
+        var teamRole
+        if (playerRole === 1) {
+            teamRole = 2
+        } else {
+            teamRole = 1
+        }
+        //clear()
+        seconds = game.timeout / 1000
+        ink = game["team" + currentPlayer.team].ink
+        turn = game["team" + currentPlayer.team].turn
+        topic = game.topic
+        Swal.fire("Game started!", "You have 60 seconds to draw <b>" + game.topic + "</b> with your teammate, " + game["team" + currentPlayer.team]["p" + teamRole].username + "!")
+    } else {
+        playerRole = 'judge'
+    }
+
+})
+socket.on("updateTime", function(timeLeft) {
+    seconds = timeLeft
+})
+socket.on("updateInk", function(inkLeft, newPaths, newTurn) {
+    ink = inkLeft
+    paths = newPaths
+    turn = newTurn
+})
 function isEmpty(obj) {
     return Object.keys(obj).length === 0;
 }
-
+function startGame() {
+    var topic
+    Swal.fire({
+        title: 'Enter a topic for the contestants to draw',
+        input: 'text',
+        showCancelButton: true,
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Specify a topic'
+            } else {
+                topic = value
+                socket.emit("startGame", topic)
+            }
+        }
+    })
+}
+function getPlayerById(id, game) {
+    if(game) {
+        var players = getPlayers(game)
+        for(var x = 0; x < players.length; x++) {
+            if(!isEmpty(players[x]) && players[x].id === id) {
+                return players[x]
+            }
+        }
+    } else {
+        return null
+    }
+}
+function getPlayers(game) {
+    var players = []
+    players.push(game.judge)
+    players.push(game.team1.p1)
+    players.push(game.team1.p2)
+    players.push(game.team2.p1)
+    players.push(game.team2.p2)
+    return players
+}

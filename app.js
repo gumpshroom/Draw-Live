@@ -5,7 +5,7 @@ var ids = []
 var games = []
 var sockets = []
 /*app.get('/', function(req, res){
-  console.log(req.url)
+  //console.log(req.url)
   try {
     if (fs.existsSync(req.url)) {
       res.sendFile(__dirname + req.url);
@@ -89,32 +89,42 @@ io.on('connection', function (socket) {
                     p1: {},
                     p2: {},
                     paths: [],
-                    timeout: 60000,
                     turn: 1,
-                    ink: 500,
+                    ink: 30,
                     score: 0
                 }
                 var newTeam2 = {
                     p1: {},
                     p2: {},
                     paths: [],
-                    timeout: 60000,
                     turn: 1,
-                    ink: 500,
+                    ink: 30,
                     score: 0
                 }
                 var newGame = {
                     team1: newTeam1,
                     team2: newTeam2,
                     judge: newPlayer,
+                    timeout: 60000,
                     round: 1,
-                    subject: "",
+                    topic: "",
                     hidden: false,
                     inGame: false,
-                    id: getUniqueGameId()
+                    id: 1, //getUniqueGameId(),
+                    finishRound: function() {
+                        gameEmit(this, "roundOver", this)
+                        this.timeout = 60000
+                        this.team1.ink = 30
+                        this.team2.ink = 30
+                        this.team1.turn = 1
+                        this.team2.turn = 1
+                        this.team1.paths = []
+                        this.team2.paths = []
+                        this.round ++
+                    }
                 }
                 games.push(newGame)
-                console.log(JSON.stringify(newGame))
+                //console.log(JSON.stringify(newGame))
                 socket.emit("joinedGame", newGame)
             } else {
                 socket.emit("alert", "Already in a game. Reload to exit.")
@@ -141,15 +151,13 @@ io.on('connection', function (socket) {
                             id: socket.id,
                             team: 0
                         }
-                        console.log(teamFilled(game.team1))
+                        //console.log(teamFilled(game.team1))
                         if (!teamFilled(game.team1)) {
                             newPlayer.team = 1
                             if (isEmpty(game.team1.p1)) {
-                                console.log(game.team1)
-                                console.log(game.team2)
+
                                 game.team1.p1 = newPlayer
-                                console.log(game.team1)
-                                console.log(game.team2)
+
                             } else {
                                 game.team1.p2 = newPlayer
                             }
@@ -163,7 +171,7 @@ io.on('connection', function (socket) {
                         }
 
 
-                        console.log(game)
+                        //console.log(game)
                         gameEmit(game, "joinedGame", game)
                         gameEmit(game, "chatUpdate", newPlayer.username + " joined the game.")
                     } else {
@@ -179,7 +187,86 @@ io.on('connection', function (socket) {
             socket.emit("alert", "Bad username. Try again.")
         }
     })
+    socket.on("startGame", function(topicraw) {
+        if(topicraw !== "") {
+            var topic = topicraw.replace(/\</g, "&lt;");   //for <
+            topic = topic.replace(/\>/g, "&gt;"); //for >
+            var game = getGameBySocketId(socket.id)
+            var members = 0
+            if(game) {
+                for(var x = 0; x < getPlayers(game).length; x++) {
+                    if(!isEmpty(getPlayers(game)[x])) {
+                        members ++
+                    }
+                }
+            }
+            if (game && members === 5) {
+                var player = getPlayerById(socket.id)
+                if (player.team === "judge") {
+                    game.topic = topic
+                    game.inGame = true
+                    setInterval(function() {
+                        gameEmit(game, "updateTime", game.timeout / 1000)
+                        if(game.timeout <= 0) {
+                            game.finishRound()
+                        }
+                        game.timeout -= 1000
+                    }, 1000)
+                    gameEmit(game, "gameStarted", game)
 
+                } else {
+                    socket.emit("alert", "Only a judge can start the game.")
+                }
+            } else {
+                socket.emit("alert", "Game not ready.")
+            }
+        } else {
+            socket.emit("alert", "Input a topic.")
+        }
+    })
+    socket.on("pathDrawn", function(path) {
+        var game = getGameBySocketId(socket.id)
+        if(game) {
+            //console.log(0)
+            var player = getPlayerById(socket.id)
+            if(player.team !== "judge") {
+                //console.log(1)
+                var team = game["team" + player.team]
+                var playerRole;
+                if(team.p1.id === player.id) {
+                    playerRole = 1
+                } else {
+                    playerRole = 2
+                }
+                if(playerRole === team.turn) {
+                    //console.log(2)
+                    var newPath = path
+                    if(path.length >= team.ink) {
+                        newPath = path.slice(0, team.ink)
+                    }
+                    team.ink -= newPath.length
+                    if(team.ink <= 0) {
+                        //console.log(3)
+                        if(playerRole === 1) {
+                            team.turn = 2
+                        } else {
+                            team.turn = 1
+                        }
+                        team.paths.push(newPath)
+                        team.ink = 30
+                        io.to(`${team["p" + team.turn]}`).emit("alert", "Your turn!")
+                    } else {
+                        team.paths.push(newPath)
+                        console.log(team.ink)
+                    }
+                    io.to(`${team.p1.id}`).emit("updateInk", team.ink, team.paths, team.turn)
+                    io.to(`${team.p2.id}`).emit("updateInk", team.ink, team.paths, team.turn)
+                } else {
+                    socket.emit("alert", "It's not your turn!")
+                }
+            }
+        }
+    })
 });
 function findObjectByKey(array, key, value) {
     for (var i = 0; i < array.length; i++) {
