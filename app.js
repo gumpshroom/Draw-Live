@@ -31,7 +31,16 @@ async function response(req, res) {
                 res.writeHead(404);
                 return res.end('Page or file not found');
             }
+
+            if (req.url.substr(-3) === ".js") {
+                res.setHeader("Content-Type", "text/javascript")
+            } else if (req.url.substr(-4) === ".css") {
+                res.setHeader("Content-Type", "text/css")
+                //console.log("sent css " + req.url)
+            }
+
             res.writeHead(200);
+
             res.end(data);
         }
     );
