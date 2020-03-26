@@ -134,7 +134,7 @@ io.on('connection', function (socket) {
                     left: 0,
                     right: 0,
                     inGame: false,
-                    id: 1,//getUniqueGameId(),
+                    id: getUniqueGameId(),
                     finishRound: function() {
 
                         var randomNum = getRandomInt(1, 3)
