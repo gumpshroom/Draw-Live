@@ -126,8 +126,19 @@ function draw() {
     chatWindow.scrollTo(0, xH);
     noFill();
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
-        var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
-        if(distThisLast >= 10) {
+        if(currentPath.length !== 0) {
+            var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
+            if (distThisLast >= 10) {
+                const point = {
+                    x: mouseX,
+                    y: mouseY,
+                    color: 0,
+                    weight: 3
+                };
+                currentPath.push(point);
+                ink--
+            }
+        } else {
             const point = {
                 x: mouseX,
                 y: mouseY,
@@ -311,7 +322,7 @@ socket.on("roundOver", function(game, paths1, paths2) {
     } else {
         Swal.fire("Round " + game.round + " Completed!", "Waiting for Judge to start next round.")
     }
-    clear()
+    //clear()
     background(255)
 })
 function isEmpty(obj) {
