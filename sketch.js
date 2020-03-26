@@ -136,20 +136,22 @@ function draw() {
         ink --
     }
     //console.log(paths)
-    for (var x = 0; x < paths.length; x++) {
-        var path = paths[x]
-        if (path.length !== 0) {
-            beginShape();
-            path.forEach(point => {
-                stroke(point.color);
-                strokeWeight(point.weight);
-                vertex(point.x, point.y);
-            });
-            endShape();
-        } else {
-            var index = paths.indexOf(path)
-            paths.splice(index, 1)
-            x--
+    if(playerRole !== "judge") {
+        for (var x = 0; x < paths.length; x++) {
+            var path = paths[x]
+            if (path.length !== 0) {
+                beginShape();
+                path.forEach(point => {
+                    stroke(point.color);
+                    strokeWeight(point.weight);
+                    vertex(point.x, point.y);
+                });
+                endShape();
+            } else {
+                var index = paths.indexOf(path)
+                paths.splice(index, 1)
+                x--
+            }
         }
     }
 }
@@ -298,9 +300,22 @@ socket.on("updateInk", function(inkLeft, newPaths, newTurn) {
     paths = newPaths
     turn = newTurn
 })
+socket.on("roundOver", function(game, paths1, paths2) {
+    var currentPlayer = getPlayerById(socket.id, game)
+    console.log(paths1)
+    if(currentPlayer.team === "judge") {
+        drawMultiplePaths(paths1, paths2)
+    } else {
+        Swal.fire("Round " + game.round + " Completed!", "Waiting for Judge to start next round.")
+    }
+})
 function isEmpty(obj) {
     return Object.keys(obj).length === 0;
 }
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
 function startGame() {
     var topic
     Swal.fire({
@@ -337,4 +352,31 @@ function getPlayers(game) {
     players.push(game.team2.p1)
     players.push(game.team2.p2)
     return players
+}
+function drawMultiplePaths(paths1, paths2) {
+    rect(318, 0, 4, 640)
+    for (var x = 0; x < paths1.length; x++) {
+        var path = paths1[x]
+        if (path.length !== 0) {
+            beginShape();
+            path.forEach(point => {
+                stroke(point.color);
+                strokeWeight(point.weight);
+                vertex(point.x/2, point.y/2);
+            });
+            endShape();
+        }
+    }
+    for (var x = 0; x < paths2.length; x++) {
+        var path = paths2[x]
+        if (path.length !== 0) {
+            beginShape();
+            path.forEach(point => {
+                stroke(point.color);
+                strokeWeight(point.weight);
+                vertex(point.x/ 2 + 320, point.y / 2);
+            });
+            endShape();
+        }
+    }
 }

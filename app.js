@@ -78,11 +78,25 @@ io.on('connection', function (socket) {
         var game = getGameBySocketId(socket.id)
         if(game && msg !== "") {
             var player = getPlayerById(socket.id)
-            var filteredmsg = msg.replace(/\</g, "&lt;");   //for <
-            filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
-            filteredmsg = "<b>" + player.username + ":</b> " + filteredmsg;
-            gameEmit(game, "chatUpdate", filteredmsg)
-            callback()
+            if(msg === "left" || msg === "right" && game.judge.id === player.id && game.right !== 0 && game.left !== 0) {
+                if(msg === "left") {
+                    game["team" + game.left].score ++
+                    gameEmit(game, "chatUpdate", "Team " + game.left + " won!")
+                    io.to(`${game["team" + game.left].p1.id}`).emit("alert", "Your team won the round!")
+                    io.to(`${game["team" + game.left].p2.id}`).emit("alert", "Your team won the round!")
+                } else {
+                    game["team" + game.right].score ++
+                    gameEmit(game, "chatUpdate", "Team " + game.right + " won!")
+                    io.to(`${game["team" + game.right].p1.id}`).emit("alert", "Your team won the round!")
+                    io.to(`${game["team" + game.right].p2.id}`).emit("alert", "Your team won the round!")
+                }
+            } else {
+                var filteredmsg = msg.replace(/\</g, "&lt;");   //for <
+                filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
+                filteredmsg = "<b>" + player.username + ":</b> " + filteredmsg;
+                gameEmit(game, "chatUpdate", filteredmsg)
+                callback()
+            }
         }
     })
     socket.on("createGame", function(name) {
@@ -117,11 +131,23 @@ io.on('connection', function (socket) {
                     timeout: 60000,
                     round: 1,
                     topic: "",
-                    hidden: false,
+                    left: 0,
+                    right: 0,
                     inGame: false,
-                    id: getUniqueGameId(),
+                    id: 1,//getUniqueGameId(),
                     finishRound: function() {
-                        gameEmit(this, "roundOver", this)
+
+                        var randomNum = getRandomInt(1, 3)
+                        var hiddenGameObj = JSON.parse(JSON.stringify(this))
+                        this.left = randomNum
+                        this.right = (randomNum % 2) + 1
+                        var players = getPlayers(this)
+                        for (var x = 0; x < players.length; x++) {
+                            if (!isEmpty(players[x])) {
+                                io.to(`${players[x].id}`).emit("roundOver", hiddenGameObj, this["team" + this.left].paths, this["team" + this.right].paths)
+                            }
+                        }
+                        gameEmit(this, "chatUpdate", this.judge.username + ", please look at your screen and say <b>right</b> or <b>left</b> in the chat to decide the victor of this round.")
                         this.timeout = 60000
                         this.team1.ink = 30
                         this.team2.ink = 30
@@ -214,9 +240,10 @@ io.on('connection', function (socket) {
                 if (player.team === "judge") {
                     game.topic = topic
                     game.inGame = true
-                    setInterval(function() {
+                    var timer = setInterval(function() {
                         gameEmit(game, "updateTime", game.timeout / 1000)
                         if(game.timeout <= 0) {
+                            clearInterval(timer)
                             game.finishRound()
                         }
                         game.timeout -= 1000
@@ -290,35 +317,7 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
-function generateSquareWithCenter(x, y, radius) {
-    var square = {
-        x1: x,
-        y1: y,
-        x2: x + radius * 2,
-        y2: y + radius * 2
-    }
-    return square
-}
-function finishGame(p1) {
-    var currentGame = findObjectByKey(games, "p1", p1)
-    var gameoverdata = {
-        p1: currentGame.p1,
-        p2: currentGame.p2,
-        p1score: currentGame.p1score,
-        p2score: currentGame.p2score
-    }
-    if(currentGame.p1score > currentGame.p2score) {
-        gameoverdata.judgement = "player 1 wins"
-    } else if(currentGame.p2score > currentGame.p1score) {
-        gameoverdata.judgement = "player 2 wins"
-    } else {
-        gameoverdata.judgement = "tie"
-    }
-    io.to(`${currentGame.p1}`).emit("gameover", gameoverdata, currentGame.p1)
-    io.to(`${currentGame.p2}`).emit("gameover", gameoverdata, currentGame.p2)
-    games.splice(games.indexOf(currentGame), 1)
 
-}
 function getUniqueGameId() {
     var foundId = false
     var id
