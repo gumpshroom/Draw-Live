@@ -78,17 +78,21 @@ io.on('connection', function (socket) {
         var game = getGameBySocketId(socket.id)
         if(game && msg !== "") {
             var player = getPlayerById(socket.id)
-            if(msg === "left" || msg === "right" && game.judge.id === player.id && game.right !== 0 && game.left !== 0) {
+            if(msg === "left" || msg === "right" && player.team === "judge" && game.right !== 0 && game.left !== 0) {
                 if(msg === "left") {
                     game["team" + game.left].score ++
                     gameEmit(game, "chatUpdate", "Team " + game.left + " won!")
                     io.to(`${game["team" + game.left].p1.id}`).emit("alert", "Your team won the round!")
                     io.to(`${game["team" + game.left].p2.id}`).emit("alert", "Your team won the round!")
+                    game.left = 0
+                    game.right = 0
                 } else {
                     game["team" + game.right].score ++
                     gameEmit(game, "chatUpdate", "Team " + game.right + " won!")
                     io.to(`${game["team" + game.right].p1.id}`).emit("alert", "Your team won the round!")
                     io.to(`${game["team" + game.right].p2.id}`).emit("alert", "Your team won the round!")
+                    game.left = 0
+                    game.right = 0
                 }
             } else {
                 var filteredmsg = msg.replace(/\</g, "&lt;");   //for <

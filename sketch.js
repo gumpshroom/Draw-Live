@@ -126,14 +126,17 @@ function draw() {
     chatWindow.scrollTo(0, xH);
     noFill();
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
-        const point = {
-            x: mouseX,
-            y: mouseY,
-            color: 0,
-            weight: 3
-        };
-        currentPath.push(point);
-        ink --
+        var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
+        if(distThisLast >= 10) {
+            const point = {
+                x: mouseX,
+                y: mouseY,
+                color: 0,
+                weight: 3
+            };
+            currentPath.push(point);
+            ink--
+        }
     }
     //console.log(paths)
     if(playerRole !== "judge") {
@@ -308,6 +311,8 @@ socket.on("roundOver", function(game, paths1, paths2) {
     } else {
         Swal.fire("Round " + game.round + " Completed!", "Waiting for Judge to start next round.")
     }
+    clear()
+    background(255)
 })
 function isEmpty(obj) {
     return Object.keys(obj).length === 0;
@@ -354,7 +359,9 @@ function getPlayers(game) {
     return players
 }
 function drawMultiplePaths(paths1, paths2) {
+    fill(0)
     rect(318, 0, 4, 640)
+    noFill()
     for (var x = 0; x < paths1.length; x++) {
         var path = paths1[x]
         if (path.length !== 0) {
