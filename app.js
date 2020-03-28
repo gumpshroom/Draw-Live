@@ -146,7 +146,7 @@ io.on('connection', function (socket) {
                     left: 0,
                     right: 0,
                     inGame: false,
-                    id: getUniqueGameId(),
+                    id: 1,//getUniqueGameId(),
                     finishRound: function() {
                         if(this.round < 5) {
                             var randomNum = getRandomInt(1, 3)
@@ -194,6 +194,7 @@ io.on('connection', function (socket) {
         var gameExists = getGameBySocketId(socket.id)
         if(name.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
             if (!gameExists) {
+                console.log(findObjectByKey(games, "id", parseInt(id)))
                 if (findObjectByKey(games, "id", parseInt(id)) && gameNameTaken(name, findObjectByKey(games, "id", parseInt(id))) === false) {
                     var game = findObjectByKey(games, "id", parseInt(id))
                     var playercount = 1
