@@ -130,11 +130,11 @@ function draw() {
     }
     chatWindow = document.getElementById('history');
 
-    if (!chatWindow.scrollTop >= (chatWindow.scrollHeight - chatWindow.offsetHeight)) {
+    //if (!chatWindow.scrollTop >= (chatWindow.scrollHeight - chatWindow.offsetHeight)) {
         //chatWindow.scrollTop = chatWindow.scrollHeight;
         var xH = chatWindow.scrollHeight;
         chatWindow.scrollTo(0, xH);
-    }
+    //}
 
     noFill();
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
