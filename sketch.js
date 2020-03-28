@@ -126,9 +126,11 @@ function draw() {
         textSize(20)
         text("Draw " + topic + "!", 10, 450)
     }
+
     chatWindow = document.getElementById('history');
-    var xH = chatWindow.scrollHeight;
-    chatWindow.scrollTo(0, xH);
+    if (chatWindow.scrollTop >= (chatWindow.scrollHeight - chatWindow.offsetHeight)) {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
     noFill();
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
         if(currentPath.length !== 0) {
