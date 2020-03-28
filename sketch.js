@@ -178,6 +178,11 @@ function draw() {
                 x--
             }
         }
+    } else {
+        textAlign(CENTER);
+        textSize(32)
+        text('Teams are drawing...', 320, 240);
+        textAlign(LEFT);
     }
 }
 
@@ -311,7 +316,7 @@ socket.on("gameStarted", function(game) {
         } else {
             teamRole = 1
         }
-        document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game. You are on Team " + currentPlayer.team + " and your teammate is " + game["team" + currentPlayer.team]["p" + teamRole].username
+        document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game. You are on Team " + currentPlayer.team + " and your teammate is " + game["team" + currentPlayer.team]["p" + teamRole].username + "."
         //clear()
         seconds = game.timeout / 1000
         ink = game["team" + currentPlayer.team].ink
@@ -369,12 +374,12 @@ socket.on("roundOver", function(game, paths1, paths2) {
     console.log(paths1)
     clear()
     background(255)
+    fill(0)
+    strokeWeight(3)
+    rect(318, 0, 4, 640)
+    noFill()
+    drawMultiplePaths(paths1, paths2)
     if(currentPlayer.team === "judge") {
-        fill(0)
-        strokeWeight(3)
-        rect(318, 0, 4, 640)
-        noFill()
-        drawMultiplePaths(paths1, paths2)
         var startBtn = document.createElement("button")
         startBtn.innerText = "Start"
         startBtn.className = accent
@@ -384,12 +389,6 @@ socket.on("roundOver", function(game, paths1, paths2) {
         document.body.appendChild(startBtn)
 
     } else {
-        background(255)
-        fill(0)
-        strokeWeight(3)
-        rect(318, 0, 4, 640)
-        noFill()
-        drawMultiplePaths(paths1, paths2)
         Swal.fire("Round " + game.round + " Completed!", "Waiting for Judge to start next round.")
     }
 
