@@ -81,14 +81,20 @@ io.on('connection', function (socket) {
             if(msg === "left" || msg === "right" && player.team === "judge" && game.right !== 0 && game.left !== 0) {
                 if(msg === "left") {
                     game["team" + game.left].score ++
-                    gameEmit(game, "chatUpdate", "Team " + game.left + " won!")
+                    gameEmit(game, "chatUpdate", "Team " + game.left + " won the round!")
+                    gameEmit(game, "chatUpdate", "Team 1 score: " + game.team1.score)
+                    gameEmit(game, "chatUpdate", "Team 2 score: " + game.team2.score)
+                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (5 - game.round))
                     io.to(`${game["team" + game.left].p1.id}`).emit("alert", "Your team won the round!")
                     io.to(`${game["team" + game.left].p2.id}`).emit("alert", "Your team won the round!")
                     game.left = 0
                     game.right = 0
                 } else {
                     game["team" + game.right].score ++
-                    gameEmit(game, "chatUpdate", "Team " + game.right + " won!")
+                    gameEmit(game, "chatUpdate", "Team " + game.right + " won the round!")
+                    gameEmit(game, "chatUpdate", "Team 1 score: " + game.team1.score)
+                    gameEmit(game, "chatUpdate", "Team 2 score: " + game.team2.score)
+                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (5 - game.round))
                     io.to(`${game["team" + game.right].p1.id}`).emit("alert", "Your team won the round!")
                     io.to(`${game["team" + game.right].p2.id}`).emit("alert", "Your team won the round!")
                     game.left = 0
@@ -138,28 +144,38 @@ io.on('connection', function (socket) {
                     left: 0,
                     right: 0,
                     inGame: false,
-                    id: getUniqueGameId(),
+                    id: 1,//getUniqueGameId(),
                     finishRound: function() {
-
-                        var randomNum = getRandomInt(1, 3)
-                        var hiddenGameObj = JSON.parse(JSON.stringify(this))
-                        this.left = randomNum
-                        this.right = (randomNum % 2) + 1
-                        var players = getPlayers(this)
-                        for (var x = 0; x < players.length; x++) {
-                            if (!isEmpty(players[x])) {
-                                io.to(`${players[x].id}`).emit("roundOver", hiddenGameObj, this["team" + this.left].paths, this["team" + this.right].paths)
+                        if(this.round < 5) {
+                            var randomNum = getRandomInt(1, 3)
+                            var hiddenGameObj = JSON.parse(JSON.stringify(this))
+                            this.left = randomNum
+                            this.right = (randomNum % 2) + 1
+                            var players = getPlayers(this)
+                            for (var x = 0; x < players.length; x++) {
+                                if (!isEmpty(players[x])) {
+                                    io.to(`${players[x].id}`).emit("roundOver", hiddenGameObj, this["team" + this.left].paths, this["team" + this.right].paths)
+                                }
                             }
+                            gameEmit(this, "chatUpdate", this.judge.username + ", please look at your screen and say <b>right</b> or <b>left</b> in the chat to decide the victor of this round.")
+                            this.timeout = 60000
+                            this.team1.ink = 30
+                            this.team2.ink = 30
+                            this.team1.turn = 1
+                            this.team2.turn = 1
+                            this.team1.paths = []
+                            this.team2.paths = []
+                            this.round++
+                        } else {
+                            if(this.team1.score > this.team2.score) {
+                                gameEmit(this, "alert", {title:"Team 1 wins!", html:"Team 1 score: " + this.team1.score + "<br>Team 2 score: " + this.team2.score + "<br>Refresh to play again!"})
+                            } else if(this.team2.score > this.team1.score) {
+                                gameEmit(this, "alert", {title:"Team 2 wins!", html:"Team 1 score: " + this.team1.score + "<br>Team 2 score: " + this.team2.score + "<br>Refresh to play again!"})
+                            } else {
+                                gameEmit(this, "alert", {title:"Tie!", html:"Team 1 score: " + this.team1.score + "<br>Team 2 score: " + this.team2.score + "<br>Refresh to play again!"})
+                            }
+                            games.splice(games.indexOf(this), 1)
                         }
-                        gameEmit(this, "chatUpdate", this.judge.username + ", please look at your screen and say <b>right</b> or <b>left</b> in the chat to decide the victor of this round.")
-                        this.timeout = 60000
-                        this.team1.ink = 30
-                        this.team2.ink = 30
-                        this.team1.turn = 1
-                        this.team2.turn = 1
-                        this.team1.paths = []
-                        this.team2.paths = []
-                        this.round ++
                     }
                 }
                 games.push(newGame)

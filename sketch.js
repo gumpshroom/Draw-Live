@@ -128,7 +128,7 @@ function draw() {
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
         if(currentPath.length !== 0) {
             var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
-            if (distThisLast >= 10) {
+            if (distThisLast >= 5) {
                 const point = {
                     x: mouseX,
                     y: mouseY,
@@ -267,6 +267,7 @@ socket.on("joinedGame", function(gameObj) {
         var startBtn = document.createElement("button")
         startBtn.innerText = "Start"
         startBtn.className = accent
+        startBtn.id = "startBtn"
         startBtn.setAttribute("onclick", "startGame()")
         startBtn.setAttribute("style", center)
         document.body.appendChild(startBtn)
@@ -277,6 +278,8 @@ socket.on("chatUpdate", function(msg){
     $("#history").append(final_message);
 });
 socket.on("gameStarted", function(game) {
+    clear()
+    background(255)
     inGame = true
     if(document.getElementById("startBtn")) {
         document.body.removeChild(document.getElementById("startBtn"))
@@ -300,6 +303,19 @@ socket.on("gameStarted", function(game) {
         seconds = game.timeout / 1000
         ink = game["team" + currentPlayer.team].ink
         turn = game["team" + currentPlayer.team].turn
+        if(turn === playerRole) {
+            fill(255)
+            noStroke()
+            rect(249, 0, 200, 40)
+            fill(0)
+            textSize(32)
+            text("Your Turn!", 250, 30)
+        } else {
+            fill(255)
+            noStroke()
+            rect(249, 0, 200, 40)
+        }
+        noFill();
         Swal.fire("Game started!", "You have 60 seconds to draw <b>" + game.topic + "</b> with your teammate, " + game["team" + currentPlayer.team]["p" + teamRole].username + "!")
     } else {
         playerRole = 'judge'
@@ -313,17 +329,44 @@ socket.on("updateInk", function(inkLeft, newPaths, newTurn) {
     ink = inkLeft
     paths = newPaths
     turn = newTurn
+    if(turn === playerRole) {
+        fill(255)
+        noStroke()
+        rect(249, 0, 200, 40)
+        fill(0)
+        textSize(32)
+        text("Your Turn!", 250, 30)
+    } else {
+        fill(255)
+        noStroke()
+        rect(249, 0, 200, 40)
+    }
+    noFill();
 })
 socket.on("roundOver", function(game, paths1, paths2) {
     var currentPlayer = getPlayerById(socket.id, game)
     console.log(paths1)
+    clear()
+    background(255)
     if(currentPlayer.team === "judge") {
+        fill(0)
+        strokeWeight(3)
+        rect(318, 0, 4, 640)
+        noFill()
         drawMultiplePaths(paths1, paths2)
+        var startBtn = document.createElement("button")
+        startBtn.innerText = "Start"
+        startBtn.className = accent
+        startBtn.id = "startBtn"
+        startBtn.setAttribute("onclick", "startGame()")
+        startBtn.setAttribute("style", center)
+        document.body.appendChild(startBtn)
+
     } else {
+
         Swal.fire("Round " + game.round + " Completed!", "Waiting for Judge to start next round.")
     }
-    //clear()
-    background(255)
+
 })
 function isEmpty(obj) {
     return Object.keys(obj).length === 0;
@@ -370,13 +413,11 @@ function getPlayers(game) {
     return players
 }
 function drawMultiplePaths(paths1, paths2) {
-    fill(0)
-    rect(318, 0, 4, 640)
-    noFill()
     for (var x = 0; x < paths1.length; x++) {
         var path = paths1[x]
         if (path.length !== 0) {
             beginShape();
+            //noFill();
             path.forEach(point => {
                 stroke(point.color);
                 strokeWeight(point.weight);
@@ -389,6 +430,7 @@ function drawMultiplePaths(paths1, paths2) {
         var path = paths2[x]
         if (path.length !== 0) {
             beginShape();
+            //noFill();
             path.forEach(point => {
                 stroke(point.color);
                 strokeWeight(point.weight);
