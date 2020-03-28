@@ -102,6 +102,16 @@ io.on('connection', function (socket) {
                     game.left = 0
                     game.right = 0
                 }
+                if(game.round === 5) {
+                    if(game.team1.score > game.team2.score) {
+                        gameEmit(game, "alert", {title:"Team 1 wins!", html:"Team 1 score: " + game.team1.score + "<br>Team 2 score: " + game.team2.score + "<br>Refresh to play again!"})
+                    } else if(game.team2.score > game.team1.score) {
+                        gameEmit(game, "alert", {title:"Team 2 wins!", html:"Team 1 score: " + game.team1.score + "<br>Team 2 score: " + game.team2.score + "<br>Refresh to play again!"})
+                    } else {
+                        gameEmit(game, "alert", {title:"Tie!", html:"Team 1 score: " + game.team1.score + "<br>Team 2 score: " + game.team2.score + "<br>Refresh to play again!"})
+                    }
+                    games.splice(games.indexOf(game), 1)
+                }
             } else {
                 var filteredmsg = msg.replace(/\</g, "&lt;");   //for <
                 filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
@@ -170,15 +180,6 @@ io.on('connection', function (socket) {
                             this.team2.paths = []
                             this.round++
                             this.paused = true
-                        } else {
-                            if(this.team1.score > this.team2.score) {
-                                gameEmit(this, "alert", {title:"Team 1 wins!", html:"Team 1 score: " + this.team1.score + "<br>Team 2 score: " + this.team2.score + "<br>Refresh to play again!"})
-                            } else if(this.team2.score > this.team1.score) {
-                                gameEmit(this, "alert", {title:"Team 2 wins!", html:"Team 1 score: " + this.team1.score + "<br>Team 2 score: " + this.team2.score + "<br>Refresh to play again!"})
-                            } else {
-                                gameEmit(this, "alert", {title:"Tie!", html:"Team 1 score: " + this.team1.score + "<br>Team 2 score: " + this.team2.score + "<br>Refresh to play again!"})
-                            }
-                            games.splice(games.indexOf(this), 1)
                         }
                     }
                 }
