@@ -100,6 +100,7 @@ function setup() {
     text('Welcome to Draw Live!', 320, 240);
     var welcome = document.createElement("p")
     welcome.innerHTML = "Welcome to Draw Live! If you don't know how to play, click <a href='about.txt'>here</a>."
+    document.getElementById("history").appendChild(welcome)
 }
 
 function draw() {
