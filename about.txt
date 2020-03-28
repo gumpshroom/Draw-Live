@@ -1,0 +1,10 @@
+Draw Live! is a party game about drawing created by ggar.
+
+To play, you need 5 people. Each game constitutes of a judge and two teams.
+Once the judge picks a topic, the game starts. Each team has 1 minute to draw the topic.
+To draw, members of a team take turns putting ink on the canvas to make shapes.
+Each member will have 30 ink to draw every turn.
+When the round is over, the judge will privately decide the victor of the round. Team names are not shown.
+A team's score will increase when they win a round.
+After the judge has decided, the game moves on to another round with a topic specified by the judge.
+When 5 rounds have passed, the game will end. The team with the highest score will win the game.

@@ -20,6 +20,8 @@ async function response(req, res) {
     var file = "";
     if (req.url === "/") {
         file = __dirname + "/index.html"
+    } else if(req.url === "/app.js") {
+        file = __dirname + "/no.txt"
     } else {
         file = __dirname + req.url;
     }
