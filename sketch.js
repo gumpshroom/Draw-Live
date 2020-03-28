@@ -297,8 +297,9 @@ socket.on("gameStarted", function(game) {
     }
     topic = game.topic
     var currentPlayer = getPlayerById(socket.id, game)
-    document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game."
+
     if(currentPlayer.team !== "judge") {
+
         if (game["team" + currentPlayer.team].p1.id === socket.id) {
             playerRole = 1
         } else {
@@ -310,6 +311,7 @@ socket.on("gameStarted", function(game) {
         } else {
             teamRole = 1
         }
+        document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game. You are on Team " + currentPlayer.team + " and your teammate is " + game["team" + currentPlayer.team]["player" + teamRole].username
         //clear()
         seconds = game.timeout / 1000
         ink = game["team" + currentPlayer.team].ink
@@ -330,6 +332,7 @@ socket.on("gameStarted", function(game) {
         noFill();
         Swal.fire("Game started!", "You have 60 seconds to draw <b>" + game.topic + "</b> with your teammate, " + game["team" + currentPlayer.team]["p" + teamRole].username + "!")
     } else {
+        document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game. You are the judge."
         playerRole = 'judge'
     }
 
@@ -382,14 +385,8 @@ socket.on("roundOver", function(game, paths1, paths2) {
         strokeWeight(3)
         rect(318, 0, 4, 640)
         noFill()
+        background(255)
         drawMultiplePaths(paths1, paths2)
-        var startBtn = document.createElement("button")
-        startBtn.innerText = "Start"
-        startBtn.className = accent
-        startBtn.id = "startBtn"
-        startBtn.setAttribute("onclick", "startGame()")
-        startBtn.setAttribute("style", center)
-        document.body.appendChild(startBtn)
         Swal.fire("Round " + game.round + " Completed!", "Waiting for Judge to start next round.")
     }
 
