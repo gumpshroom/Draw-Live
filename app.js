@@ -265,6 +265,8 @@ io.on('connection', function (socket) {
                     game.inGame = true
                     var timer = setInterval(function() {
                         gameEmit(game, "updateTime", game.timeout / 1000)
+                        game.team1.paths = []
+                        game.team2.paths = []
                         if(game.timeout <= 0) {
                             clearInterval(timer)
                             game.finishRound()

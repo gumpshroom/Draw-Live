@@ -352,6 +352,9 @@ socket.on("updateInk", function(inkLeft, newPaths, newTurn) {
         fill(255)
         noStroke()
         rect(249, 0, 200, 40)
+        fill(0)
+        textSize(32)
+        text("Their Turn!", 250, 30)
     }
     noFill();
 })
@@ -375,7 +378,18 @@ socket.on("roundOver", function(game, paths1, paths2) {
         document.body.appendChild(startBtn)
 
     } else {
-
+        fill(0)
+        strokeWeight(3)
+        rect(318, 0, 4, 640)
+        noFill()
+        drawMultiplePaths(paths1, paths2)
+        var startBtn = document.createElement("button")
+        startBtn.innerText = "Start"
+        startBtn.className = accent
+        startBtn.id = "startBtn"
+        startBtn.setAttribute("onclick", "startGame()")
+        startBtn.setAttribute("style", center)
+        document.body.appendChild(startBtn)
         Swal.fire("Round " + game.round + " Completed!", "Waiting for Judge to start next round.")
     }
 
