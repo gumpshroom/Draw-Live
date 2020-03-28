@@ -12,6 +12,7 @@ var playerRole
 var ink
 var turn
 var topic
+var paused
 function setup() {
     cnv = createCanvas(640, 480);
     cnv.mouseOver(function () {
@@ -161,29 +162,31 @@ function draw() {
         }
     }
     //console.log(paths)
-    if(playerRole !== "judge") {
-        for (var x = 0; x < paths.length; x++) {
-            var path = paths[x]
-            if (path.length !== 0) {
-                beginShape();
-                path.forEach(point => {
-                    stroke(point.color);
-                    strokeWeight(point.weight);
-                    vertex(point.x, point.y);
-                });
-                endShape();
-            } else {
-                var index = paths.indexOf(path)
-                paths.splice(index, 1)
-                x--
+    if(!paused) {
+        if (playerRole !== "judge") {
+            for (var x = 0; x < paths.length; x++) {
+                var path = paths[x]
+                if (path.length !== 0) {
+                    beginShape();
+                    path.forEach(point => {
+                        stroke(point.color);
+                        strokeWeight(point.weight);
+                        vertex(point.x, point.y);
+                    });
+                    endShape();
+                } else {
+                    var index = paths.indexOf(path)
+                    paths.splice(index, 1)
+                    x--
+                }
             }
+        } else {
+            textAlign(CENTER);
+            textSize(32)
+            fill(0)
+            text('Teams are drawing...', 320, 240);
+            textAlign(LEFT);
         }
-    } else {
-        textAlign(CENTER);
-        textSize(32)
-        fill(0)
-        text('Teams are drawing...', 320, 240);
-        textAlign(LEFT);
     }
 }
 
@@ -323,6 +326,7 @@ socket.on("gameStarted", function(game) {
         ink = game["team" + currentPlayer.team].ink
         turn = game["team" + currentPlayer.team].turn
         paths = game["team" + currentPlayer.team].paths
+        paused = false
         if(turn === playerRole) {
             fill(255)
             noStroke()
@@ -372,6 +376,7 @@ socket.on("updateInk", function(inkLeft, newPaths, newTurn) {
 })
 socket.on("roundOver", function(game, paths1, paths2) {
     var currentPlayer = getPlayerById(socket.id, game)
+    paused = true
     console.log(paths1)
     clear()
     background(255)
