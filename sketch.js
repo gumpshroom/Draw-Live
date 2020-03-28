@@ -311,7 +311,7 @@ socket.on("gameStarted", function(game) {
         } else {
             teamRole = 1
         }
-        document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game. You are on Team " + currentPlayer.team + " and your teammate is " + game["team" + currentPlayer.team]["player" + teamRole].username
+        document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game. You are on Team " + currentPlayer.team + " and your teammate is " + game["team" + currentPlayer.team]["p" + teamRole].username
         //clear()
         seconds = game.timeout / 1000
         ink = game["team" + currentPlayer.team].ink
