@@ -181,6 +181,7 @@ function draw() {
     } else {
         textAlign(CENTER);
         textSize(32)
+        fill(0)
         text('Teams are drawing...', 320, 240);
         textAlign(LEFT);
     }

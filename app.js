@@ -268,12 +268,15 @@ io.on('connection', function (socket) {
                     game.paused = false
                     var timer = setInterval(function() {
                         gameEmit(game, "updateTime", game.timeout / 1000)
-                        game.team1.paths = []
-                        game.team2.paths = []
+
                         if(game.timeout <= 0) {
                             clearInterval(timer)
+                            game.team1.paths = []
+                            game.team2.paths = []
                             game.finishRound()
+
                         }
+
                         game.timeout -= 1000
                     }, 1000)
                     gameEmit(game, "gameStarted", game)
@@ -318,7 +321,7 @@ io.on('connection', function (socket) {
                         }
                         team.paths.push(newPath)
                         team.ink = 30
-                        io.to(`${team["p" + team.turn]}`).emit("alert", "Your turn!")
+                        //io.to(`${team["p" + team.turn]}`).emit("alert", "Your turn!")
                     } else {
                         team.paths.push(newPath)
                         console.log(team.ink)
