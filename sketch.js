@@ -314,6 +314,7 @@ socket.on("gameStarted", function(game) {
         seconds = game.timeout / 1000
         ink = game["team" + currentPlayer.team].ink
         turn = game["team" + currentPlayer.team].turn
+        paths = game["team" + currentPlayer.team].paths
         if(turn === playerRole) {
             fill(255)
             noStroke()
