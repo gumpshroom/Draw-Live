@@ -128,13 +128,13 @@ function draw() {
         text("Draw " + topic + "!", 10, 450)
     }
     chatWindow = document.getElementById('history');
-    var xH = chatWindow.scrollHeight;
-    chatWindow.scrollTo(0, xH);
-    /*
+
     if (chatWindow.scrollTop >= (chatWindow.scrollHeight - chatWindow.offsetHeight)) {
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+        //chatWindow.scrollTop = chatWindow.scrollHeight;
+        var xH = chatWindow.scrollHeight;
+        chatWindow.scrollTo(0, xH);
     }
-     */
+
     noFill();
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
         if(currentPath.length !== 0) {
@@ -328,6 +328,9 @@ socket.on("gameStarted", function(game) {
             fill(255)
             noStroke()
             rect(249, 0, 200, 40)
+            fill(0)
+            textSize(32)
+            text("Their Turn!", 250, 30)
         }
         noFill();
         Swal.fire("Game started!", "You have 60 seconds to draw <b>" + game.topic + "</b> with your teammate, " + game["team" + currentPlayer.team]["p" + teamRole].username + "!")
@@ -381,11 +384,11 @@ socket.on("roundOver", function(game, paths1, paths2) {
         document.body.appendChild(startBtn)
 
     } else {
+        background(255)
         fill(0)
         strokeWeight(3)
         rect(318, 0, 4, 640)
         noFill()
-        background(255)
         drawMultiplePaths(paths1, paths2)
         Swal.fire("Round " + game.round + " Completed!", "Waiting for Judge to start next round.")
     }

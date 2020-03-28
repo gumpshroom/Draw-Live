@@ -146,6 +146,7 @@ io.on('connection', function (socket) {
                     left: 0,
                     right: 0,
                     inGame: false,
+                    paused: true,
                     id: getUniqueGameId(),
                     finishRound: function() {
                         if(this.round < 5) {
@@ -168,6 +169,7 @@ io.on('connection', function (socket) {
                             this.team1.paths = []
                             this.team2.paths = []
                             this.round++
+                            this.paused = true
                         } else {
                             if(this.team1.score > this.team2.score) {
                                 gameEmit(this, "alert", {title:"Team 1 wins!", html:"Team 1 score: " + this.team1.score + "<br>Team 2 score: " + this.team2.score + "<br>Refresh to play again!"})
@@ -263,6 +265,7 @@ io.on('connection', function (socket) {
                 if (player.team === "judge") {
                     game.topic = topic
                     game.inGame = true
+                    game.paused = false
                     var timer = setInterval(function() {
                         gameEmit(game, "updateTime", game.timeout / 1000)
                         game.team1.paths = []
@@ -287,7 +290,7 @@ io.on('connection', function (socket) {
     })
     socket.on("pathDrawn", function(path) {
         var game = getGameBySocketId(socket.id)
-        if(game) {
+        if(game && !game.paused) {
             //console.log(0)
             var player = getPlayerById(socket.id)
             if(player.team !== "judge") {
@@ -326,6 +329,8 @@ io.on('connection', function (socket) {
                     socket.emit("alert", "It's not your turn!")
                 }
             }
+        } else {
+            socket.emit("alert", "Game does not exist or game has not resumed.")
         }
     })
 });
