@@ -271,8 +271,6 @@ io.on('connection', function (socket) {
 
                         if(game.timeout <= 0) {
                             clearInterval(timer)
-                            game.team1.paths = []
-                            game.team2.paths = []
                             game.finishRound()
 
                         }
