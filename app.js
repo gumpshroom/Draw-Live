@@ -221,6 +221,8 @@ io.on('connection', function (socket) {
 
                             } else if(isEmpty(game.team1.p2)) {
                                 game.team1.p2 = newPlayer
+                            } else {
+                                socket.emit("alert", "Game is full.")
                             }
                         } else {
                             newPlayer.team = 2
@@ -228,6 +230,8 @@ io.on('connection', function (socket) {
                                 game.team2.p1 = newPlayer
                             } else if(isEmpty(game.team2.p2)){
                                 game.team2.p2 = newPlayer
+                            } else {
+                                socket.emit("alert", "Game is full.")
                             }
                         }
 
