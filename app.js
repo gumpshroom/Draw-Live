@@ -219,14 +219,14 @@ io.on('connection', function (socket) {
 
                                 game.team1.p1 = newPlayer
 
-                            } else {
+                            } else if(isEmpty(game.team1.p2)) {
                                 game.team1.p2 = newPlayer
                             }
                         } else {
                             newPlayer.team = 2
                             if (isEmpty(game.team2.p1)) {
                                 game.team2.p1 = newPlayer
-                            } else {
+                            } else if(isEmpty(game.team2.p2)){
                                 game.team2.p2 = newPlayer
                             }
                         }
