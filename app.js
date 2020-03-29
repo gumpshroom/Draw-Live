@@ -86,7 +86,7 @@ io.on('connection', function (socket) {
                     gameEmit(game, "chatUpdate", "Team " + game.left + " won the round!")
                     gameEmit(game, "chatUpdate", "Team 1 (" + game.team1.p1.username + " and " + game.team1.p2.username + ") score: " + game.team1.score)
                     gameEmit(game, "chatUpdate", "Team 2 (" + game.team2.p1.username + " and " + game.team2.p2.username + ") score: " + game.team2.score)
-                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (5 - game.round))
+                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (5 - game.round) + 1)
                     io.to(`${game["team" + game.left].p1.id}`).emit("alert", "Your team won the round!")
                     io.to(`${game["team" + game.left].p2.id}`).emit("alert", "Your team won the round!")
                     game.left = 0
@@ -96,7 +96,7 @@ io.on('connection', function (socket) {
                     gameEmit(game, "chatUpdate", "Team " + game.right + " won the round!")
                     gameEmit(game, "chatUpdate", "Team 1 (" + game.team1.p1.username + " and " + game.team1.p2.username + ") score: " + game.team1.score)
                     gameEmit(game, "chatUpdate", "Team 2 (" + game.team2.p1.username + " and " + game.team2.p2.username + ") score: " + game.team2.score)
-                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (5 - game.round))
+                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (5 - game.round) + 1)
                     io.to(`${game["team" + game.right].p1.id}`).emit("alert", "Your team won the round!")
                     io.to(`${game["team" + game.right].p2.id}`).emit("alert", "Your team won the round!")
                     game.left = 0
