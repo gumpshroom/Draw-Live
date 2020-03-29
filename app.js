@@ -159,7 +159,7 @@ io.on('connection', function (socket) {
                     paused: true,
                     id: getUniqueGameId(),
                     finishRound: function() {
-                        if(this.round < 5) {
+                        if(this.round <= 5) {
                             var randomNum = getRandomInt(1, 3)
                             var hiddenGameObj = JSON.parse(JSON.stringify(this))
                             this.left = randomNum
