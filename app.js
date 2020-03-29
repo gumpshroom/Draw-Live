@@ -102,7 +102,7 @@ io.on('connection', function (socket) {
                     game.left = 0
                     game.right = 0
                 }
-                if(game.round === 5) {
+                if(game.round > 5) {
                     if(game.team1.score > game.team2.score) {
                         gameEmit(game, "alert", {title:"Team 1 wins!", html:"Team 1 score: " + game.team1.score + "<br>Team 2 score: " + game.team2.score + "<br>Refresh to play again!"})
                     } else if(game.team2.score > game.team1.score) {
