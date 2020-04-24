@@ -140,9 +140,19 @@ function draw() {
 
     noFill();
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
-
-        var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
-        if (distThisLast >= 5 || currentPath.length === 0) {
+        if(currentPath.length !== 0) {
+            var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
+            if (distThisLast >= 5) {
+                const point = {
+                    x: mouseX,
+                    y: mouseY,
+                    color: 0,
+                    weight: 3
+                };
+                currentPath.push(point);
+                ink--
+            }
+        } else {
             const point = {
                 x: mouseX,
                 y: mouseY,
