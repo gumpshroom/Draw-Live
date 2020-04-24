@@ -300,7 +300,7 @@ function selectText(containerid) {
 }
 socket.on("alert", function (content) {
     Swal.fire(content)
-    if(content.includes(" left. Party's over.") || content.includes("Host left the game, please reload.") || (content.html && content.includes("Team 1 score:"))) {
+    if(content.includes(" left. Party's over.") || content.includes("Host left the game, reloading...") || (content.html && content.includes("Team 1 score:"))) {
         setTimeout(function() {
             location.reload()
         }, 1000)

@@ -72,7 +72,7 @@ io.on('connection', function (socket) {
                 games.splice(games.indexOf(game), 1)
             } else {
                 if (player.team === "judge") {
-                    gameEmit(game, "alert", "Host left the game, please reload.")
+                    gameEmit(game, "alert", "Host left the game, reloading...")
                     games.splice(games.indexOf(game), 1)
                 } else if (game["team" + player.team].p1.id === player.id) {
                     game["team" + player.team].p1 = {}
