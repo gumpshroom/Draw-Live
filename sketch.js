@@ -13,7 +13,7 @@ var ink
 var turn
 var topic
 var paused
-
+var firstTime = true
 function setup() {
     cnv = createCanvas(640, 480);
     cnv.mouseOver(function () {
@@ -133,8 +133,9 @@ function draw() {
 
     //if (!chatWindow.scrollTop >= (chatWindow.scrollHeight - chatWindow.offsetHeight)) {
     //chatWindow.scrollTop = chatWindow.scrollHeight;
-    var xH = chatWindow.scrollHeight;
-    chatWindow.scrollTo(0, xH);
+    //var xH = chatWindow.scrollHeight;
+    //chatWindow.scrollTo(0, xH);
+
     //}
 
     noFill();
@@ -290,6 +291,13 @@ socket.on("joinedGame", function (gameObj) {
 socket.on("chatUpdate", function (msg) {
     var final_message = $("<p />").html(msg);
     $("#history").append(final_message);
+    var container = document.getElementById("history")
+    if (firstTime) {
+        container.scrollTop = container.scrollHeight;
+        firstTime = false;
+    } else if (container.scrollTop + container.clientHeight >= container.scrollHeight * 0.9) {
+        container.scrollTop = container.scrollHeight;
+    }
 });
 socket.on("gameStarted", function (game) {
     clear()
