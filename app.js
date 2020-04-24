@@ -115,9 +115,12 @@ io.on('connection', function (socket) {
             } else {
                 var filteredmsg = msg.replace(/\</g, "&lt;");   //for <
                 filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
-                filteredmsg = "<b>" + player.username + ":</b> " + filteredmsg;
+                if(filteredmsg.slice(0, 3) === "/me") {
+                    filteredmsg = "<i><b>" + player.username + "</b> " + filteredmsg + "</i>"
+                } else {
+                    filteredmsg = "<b>" + player.username + ":</b> " + filteredmsg;
+                }
                 gameEmit(game, "chatUpdate", filteredmsg)
-
             }
             callback()
         }
