@@ -117,11 +117,12 @@ io.on('connection', function (socket) {
                 filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
                 filteredmsg = "<b>" + player.username + ":</b> " + filteredmsg;
                 gameEmit(game, "chatUpdate", filteredmsg)
-                callback()
+
             }
+            callback()
         }
     })
-    socket.on("createGame", function(name) {
+    socket.on("createGame", function(name, fill) {
         if(name.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
             var game = getGameBySocketId(socket.id)
             if (!game) {
@@ -183,8 +184,13 @@ io.on('connection', function (socket) {
                         }
                     }
                 }
+                if(fill) {
+                    fillGame(newGame)
+                }
                 games.push(newGame)
-                //console.log(JSON.stringify(newGame))
+                //console.log("new game: " + JSON.stringify(newGame))
+                //console.log("all games: " + objArrayToString(games))
+                //console.log("includes new game: " + games.includes(newGame))
                 socket.emit("joinedGame", newGame)
             } else {
                 socket.emit("alert", "Already in a game. Reload to exit.")
@@ -222,21 +228,27 @@ io.on('connection', function (socket) {
                             } else if(isEmpty(game.team1.p2)) {
                                 game.team1.p2 = newPlayer
                             }
+                            gameEmit(game, "joinedGame", game)
+                            gameEmit(game, "chatUpdate", newPlayer.username + " joined the game.")
                         } else {
                             newPlayer.team = 2
                             if (isEmpty(game.team2.p1)) {
                                 game.team2.p1 = newPlayer
+                                gameEmit(game, "joinedGame", game)
+                                gameEmit(game, "chatUpdate", newPlayer.username + " joined the game.")
                             } else if(isEmpty(game.team2.p2)){
                                 game.team2.p2 = newPlayer
+                                gameEmit(game, "joinedGame", game)
+                                gameEmit(game, "chatUpdate", newPlayer.username + " joined the game.")
                             } else {
                                 socket.emit("alert", "Game is full.")
                             }
+
                         }
 
 
                         //console.log(game)
-                        gameEmit(game, "joinedGame", game)
-                        gameEmit(game, "chatUpdate", newPlayer.username + " joined the game.")
+
                     } else {
                         socket.emit("alert", "Game is full.")
                     }
@@ -257,12 +269,15 @@ io.on('connection', function (socket) {
             var game = getGameBySocketId(socket.id)
             var members = 0
             if(game) {
+                console.log("we have game")
                 for(var x = 0; x < getPlayers(game).length; x++) {
                     if(!isEmpty(getPlayers(game)[x])) {
                         members ++
                     }
                 }
             }
+            //console.log("gameToStart: " + game)
+            //console.log("allGames: " + objArrayToString(games))
             if (game && members === 5) {
                 var player = getPlayerById(socket.id)
                 if (player.team === "judge") {
@@ -391,8 +406,9 @@ function getGameBySocketId(id) {
     for(var x = 0; x < games.length; x++) {
         var game = games[x]
         var players = getPlayers(game)
-        for(var x = 0; x < players.length; x++) {
-            if(!isEmpty(players[x]) && players[x].id === id) {
+        for(var y = 0; y < players.length; y++) {
+            console.log(id + " : " + players[y].id)
+            if(!isEmpty(players[y]) && players[y].id === id) {
                 return game
             }
         }
@@ -417,6 +433,42 @@ function gameEmit(game, toEmit, args) {
     for (var x = 0; x < players.length; x++) {
         if (!isEmpty(players[x])) {
             io.to(`${players[x].id}`).emit(toEmit, args)
+        }
+    }
+}
+function objArrayToString(arr) {
+    var string = "[";
+    for (var i = 0; i < arr.length; i++) {
+        if (i != arr.length - 1) {
+            string += JSON.stringify(arr[i]) + ", "
+        } else {
+            string += JSON.stringify(arr[i])
+        }
+    }
+    string += "]";
+    return string
+}
+function fillGame(game) {
+    if(game) {
+        game.team1.p1 = {
+            username: getRandomInt(500001, 999999),
+            id: getRandomInt(100000, 500000),
+            team: 1
+        }
+        game.team1.p2 = {
+            username: getRandomInt(500001, 999999),
+            id: getRandomInt(100000, 500000),
+            team: 1
+        }
+        game.team2.p1 = {
+            username: getRandomInt(500001, 999999),
+            id: getRandomInt(100000, 500000),
+            team: 2
+        }
+        game.team2.p2 = {
+            username: getRandomInt(500001, 999999),
+            id: getRandomInt(100000, 500000),
+            team: 2
         }
     }
 }

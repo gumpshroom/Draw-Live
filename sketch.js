@@ -13,6 +13,7 @@ var ink
 var turn
 var topic
 var paused
+
 function setup() {
     cnv = createCanvas(640, 480);
     cnv.mouseOver(function () {
@@ -59,11 +60,11 @@ function setup() {
     form.append(sendBtn)
     form.append(textInput)
 
-    $(form).submit(function(e) {
+    $(form).submit(function (e) {
         console.log("wow")
         console.log(e)
         e.preventDefault();
-        socket.emit("gamemsg", $(this).find("#msg_text").val(), function() {
+        socket.emit("gamemsg", $(this).find("#msg_text").val(), function () {
             $("form#chat #msg_text").val("");
         });
     });
@@ -75,7 +76,7 @@ function setup() {
     var createBtn = document.createElement("button")
     createBtn.innerText = "Create Game"
     createBtn.className = accent
-    createBtn.setAttribute("onclick", "createGame()")
+    createBtn.setAttribute("onclick", "createGame(false)")
     createBtn.style = center
     var joinBtn = document.createElement("button")
     joinBtn.innerText = "Join Game"
@@ -107,7 +108,7 @@ function setup() {
 
 function draw() {
 
-    if(inGame && seconds !== undefined) {
+    if (inGame && seconds !== undefined) {
         //console.log(seconds)
         fill(255)
         noStroke()
@@ -116,7 +117,7 @@ function draw() {
         textSize(32)
         text(seconds, 10, 30)
     }
-    if(inGame && playerRole !== "judge") {
+    if (inGame && playerRole !== "judge") {
         fill(255)
         noStroke()
         rect(499, 0, 100, 40)
@@ -124,33 +125,23 @@ function draw() {
         textSize(32)
         text("ink: " + ink, 500, 30)
     }
-    if(inGame) {
+    if (inGame) {
         textSize(20)
         text("Draw " + topic + "!", 10, 450)
     }
     chatWindow = document.getElementById('history');
 
     //if (!chatWindow.scrollTop >= (chatWindow.scrollHeight - chatWindow.offsetHeight)) {
-        //chatWindow.scrollTop = chatWindow.scrollHeight;
-        var xH = chatWindow.scrollHeight;
-        chatWindow.scrollTo(0, xH);
+    //chatWindow.scrollTop = chatWindow.scrollHeight;
+    var xH = chatWindow.scrollHeight;
+    chatWindow.scrollTo(0, xH);
     //}
 
     noFill();
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
-        if(currentPath.length !== 0) {
-            var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
-            if (distThisLast >= 5) {
-                const point = {
-                    x: mouseX,
-                    y: mouseY,
-                    color: 0,
-                    weight: 3
-                };
-                currentPath.push(point);
-                ink--
-            }
-        } else {
+
+        var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
+        if (distThisLast >= 5 || currentPath.length === 0) {
             const point = {
                 x: mouseX,
                 y: mouseY,
@@ -160,9 +151,10 @@ function draw() {
             currentPath.push(point);
             ink--
         }
+
     }
     //console.log(paths)
-    if(!paused) {
+    if (!paused) {
         if (playerRole !== "judge") {
             for (var x = 0; x < paths.length; x++) {
                 var path = paths[x]
@@ -196,13 +188,15 @@ function mousePressed() {
     paths.push(currentPath);
 
 }
+
 function mouseReleased() {
-    if(inGame && currentPath.length !== 0) {
+    if (inGame && currentPath.length !== 0) {
         socket.emit("pathDrawn", currentPath)
         console.log(currentPath)
     }
 }
-function createGame() {
+
+function createGame(fill) {
     var username
     Swal.fire({
         title: 'Enter a username between 4 and 15 characters long letters only',
@@ -213,7 +207,7 @@ function createGame() {
                 return 'Specify a username between 4 and 15 characters long letters only'
             } else {
                 username = value
-                socket.emit("createGame", username)
+                socket.emit("createGame", username, fill)
             }
         }
     })
@@ -233,7 +227,7 @@ function joinGame() {
 
             }
         }
-    }).then(function(){
+    }).then(function () {
         Swal.fire({
             title: 'Enter a username between 4 and 15 characters long letters only',
             input: 'text',
@@ -250,13 +244,13 @@ function joinGame() {
     })
 
 
-
 }
-socket.on("alert", function(content) {
+
+socket.on("alert", function (content) {
     Swal.fire(content)
 })
-socket.on("joinedGame", function(gameObj) {
-    if(document.getElementById("startBtn")) {
+socket.on("joinedGame", function (gameObj) {
+    if (document.getElementById("startBtn")) {
         document.body.removeChild(document.getElementById("startBtn"))
     }
     var gameInfo = document.getElementById("gameInfo")
@@ -265,25 +259,25 @@ socket.on("joinedGame", function(gameObj) {
     var t1p2 = "nobody"
     var t2p1 = "nobody"
     var t2p2 = "nobody"
-    if(!isEmpty(gameObj.team1.p1)) {
+    if (!isEmpty(gameObj.team1.p1)) {
         t1p1 = gameObj.team1.p1.username
-        members ++
+        members++
     }
-    if(!isEmpty(gameObj.team1.p2)) {
+    if (!isEmpty(gameObj.team1.p2)) {
         t1p2 = gameObj.team1.p2.username
-        members ++
+        members++
     }
-    if(!isEmpty(gameObj.team2.p1)) {
+    if (!isEmpty(gameObj.team2.p1)) {
         t2p1 = gameObj.team2.p1.username
-        members ++
+        members++
     }
-    if(!isEmpty(gameObj.team2.p2)) {
+    if (!isEmpty(gameObj.team2.p2)) {
         t2p2 = gameObj.team2.p2.username
-        members ++
+        members++
     }
     gameInfo.innerText = "You're in game " + gameObj.id + " with " + members + " member(s). You need 5 to play."
     gameInfo.innerHTML += "<br>Judge: " + gameObj.judge.username + "<br>Team 1: " + t1p1 + " and " + t1p2 + "<br>Team 2: " + t2p1 + " and " + t2p2
-    if(members === 5 && gameObj.judge.id === socket.id) {
+    if (members === 5 && gameObj.judge.id === socket.id) {
         var startBtn = document.createElement("button")
         startBtn.innerText = "Start"
         startBtn.className = accent
@@ -293,21 +287,21 @@ socket.on("joinedGame", function(gameObj) {
         document.body.appendChild(startBtn)
     }
 })
-socket.on("chatUpdate", function(msg){
+socket.on("chatUpdate", function (msg) {
     var final_message = $("<p />").html(msg);
     $("#history").append(final_message);
 });
-socket.on("gameStarted", function(game) {
+socket.on("gameStarted", function (game) {
     clear()
     background(255)
     inGame = true
-    if(document.getElementById("startBtn")) {
+    if (document.getElementById("startBtn")) {
         document.body.removeChild(document.getElementById("startBtn"))
     }
     topic = game.topic
     var currentPlayer = getPlayerById(socket.id, game)
 
-    if(currentPlayer.team !== "judge") {
+    if (currentPlayer.team !== "judge") {
 
         if (game["team" + currentPlayer.team].p1.id === socket.id) {
             playerRole = 1
@@ -327,7 +321,7 @@ socket.on("gameStarted", function(game) {
         turn = game["team" + currentPlayer.team].turn
         paths = game["team" + currentPlayer.team].paths
         paused = false
-        if(turn === playerRole) {
+        if (turn === playerRole) {
             fill(255)
             noStroke()
             rect(249, 0, 200, 40)
@@ -350,14 +344,14 @@ socket.on("gameStarted", function(game) {
     }
 
 })
-socket.on("updateTime", function(timeLeft) {
+socket.on("updateTime", function (timeLeft) {
     seconds = timeLeft
 })
-socket.on("updateInk", function(inkLeft, newPaths, newTurn) {
+socket.on("updateInk", function (inkLeft, newPaths, newTurn) {
     ink = inkLeft
     paths = newPaths
     turn = newTurn
-    if(turn === playerRole) {
+    if (turn === playerRole) {
         fill(255)
         noStroke()
         rect(249, 0, 200, 40)
@@ -374,7 +368,7 @@ socket.on("updateInk", function(inkLeft, newPaths, newTurn) {
     }
     noFill();
 })
-socket.on("roundOver", function(game, paths1, paths2) {
+socket.on("roundOver", function (game, paths1, paths2) {
     var currentPlayer = getPlayerById(socket.id, game)
     paused = true
     console.log(paths1)
@@ -385,7 +379,7 @@ socket.on("roundOver", function(game, paths1, paths2) {
     rect(318, 0, 4, 640)
     noFill()
     drawMultiplePaths(paths1, paths2)
-    if(currentPlayer.team === "judge") {
+    if (currentPlayer.team === "judge") {
         var startBtn = document.createElement("button")
         startBtn.innerText = "Start"
         startBtn.className = accent
@@ -399,9 +393,11 @@ socket.on("roundOver", function(game, paths1, paths2) {
     }
 
 })
+
 function isEmpty(obj) {
     return Object.keys(obj).length === 0;
 }
+
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -422,11 +418,12 @@ function startGame() {
         }
     })
 }
+
 function getPlayerById(id, game) {
-    if(game) {
+    if (game) {
         var players = getPlayers(game)
-        for(var x = 0; x < players.length; x++) {
-            if(!isEmpty(players[x]) && players[x].id === id) {
+        for (var x = 0; x < players.length; x++) {
+            if (!isEmpty(players[x]) && players[x].id === id) {
                 return players[x]
             }
         }
@@ -434,6 +431,7 @@ function getPlayerById(id, game) {
         return null
     }
 }
+
 function getPlayers(game) {
     var players = []
     players.push(game.judge)
@@ -443,6 +441,7 @@ function getPlayers(game) {
     players.push(game.team2.p2)
     return players
 }
+
 function drawMultiplePaths(paths1, paths2) {
     for (var x = 0; x < paths1.length; x++) {
         var path = paths1[x]
@@ -452,7 +451,7 @@ function drawMultiplePaths(paths1, paths2) {
             path.forEach(point => {
                 stroke(point.color);
                 strokeWeight(point.weight);
-                vertex(point.x/2, point.y/2);
+                vertex(point.x / 2, point.y / 2);
             });
             endShape();
         }
@@ -465,7 +464,7 @@ function drawMultiplePaths(paths1, paths2) {
             path.forEach(point => {
                 stroke(point.color);
                 strokeWeight(point.weight);
-                vertex(point.x/ 2 + 320, point.y / 2);
+                vertex(point.x / 2 + 320, point.y / 2);
             });
             endShape();
         }
