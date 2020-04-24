@@ -14,6 +14,18 @@ var turn
 var topic
 var paused
 var firstTime = true
+var joinedGame = false
+function shouldJoinGame() {
+    if(window.location.pathname.slice(0, 5) === "/join" && getUrlParameter("id")) {
+        joinGameWithId(parseInt(getUrlParameter("id")))
+    }
+}
+function getUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
 function setup() {
     cnv = createCanvas(640, 480);
     cnv.mouseOver(function () {
@@ -256,11 +268,46 @@ function joinGame() {
 
 
 }
+function joinGameWithId(id) {
+    var username
+        Swal.fire({
+            title: 'Enter a username between 4 and 15 characters long letters only',
+            input: 'text',
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
+                    return 'Specify a username between 4 and 15 characters long letters only'
+                } else {
+                    username = value
+                    socket.emit("joinGame", id, username)
+                }
+            }
+        })
 
+
+}
+function selectText(containerid) {
+    if (document.selection) { // IE
+        var range = document.body.createTextRange();
+        range.moveToElementText(document.getElementById(containerid));
+        range.select();
+    } else if (window.getSelection) {
+        var range = document.createRange();
+        range.selectNode(document.getElementById(containerid));
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+    }
+}
 socket.on("alert", function (content) {
     Swal.fire(content)
+    if(content.includes(" left. Party's over.") || content.includes("Host left the game, please reload.") || (content.html && content.includes("Team 1 score:"))) {
+        setTimeout(function() {
+            location.reload()
+        }, 1000)
+    }
 })
 socket.on("joinedGame", function (gameObj) {
+
     if (document.getElementById("startBtn")) {
         document.body.removeChild(document.getElementById("startBtn"))
     }
@@ -297,6 +344,20 @@ socket.on("joinedGame", function (gameObj) {
         startBtn.setAttribute("style", center)
         document.body.appendChild(startBtn)
     }
+    var final_message
+    if(members < 5 && !joinedGame) {
+
+        final_message = $("<p />").html("You've joined the game! Invite your friends with this link: <input type='text' size='60' id='select' onclick='selectText(\"select\")' value='" + window.location.protocol + "//" + window.location.hostname + "/" + "join?id=" + gameObj.id + "'>");
+        $("#history").append(final_message);
+        var container = document.getElementById("history")
+        if (firstTime) {
+            container.scrollTop = container.scrollHeight;
+            firstTime = false;
+        } else if (container.scrollTop + container.clientHeight >= container.scrollHeight * 0.9) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+    joinedGame = true
 })
 socket.on("chatUpdate", function (msg) {
     var final_message = $("<p />").html(msg);
