@@ -3,14 +3,14 @@ form {
 }
 
 form input[type='text'] {
-    border: 2px solid #eb5424;
+    border: 2px solid #448aff;
     border-radius: 5px;
     padding: 5px;
     /*width: 75%;*/
 }
 
 form input[type='submit'] {
-    background: #eb5424;
+    background: #448aff;
     border: none;
     border-radius: 5px;
     color: #FFF;
@@ -22,7 +22,7 @@ form input[type='submit'] {
 
 #history {
     background: #FFF;
-    border: 2px solid #eb5424;
+    border: 2px solid #448aff;
     width: 19%;
     overflow: scroll;
     /*height: 550px;*/

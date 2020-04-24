@@ -78,7 +78,7 @@ io.on('connection', function (socket) {
     });
     socket.on("gamemsg", function(msg, callback)  {
         var game = getGameBySocketId(socket.id)
-        if(game && msg !== "") {
+        if(game && msg !== "" && msg !== "/me") {
             var player = getPlayerById(socket.id)
             if(msg === "left" || msg === "right" && player.team === "judge" && game.right !== 0 && game.left !== 0) {
                 if(msg === "left") {
@@ -116,12 +116,18 @@ io.on('connection', function (socket) {
                 var filteredmsg = msg.replace(/\</g, "&lt;");   //for <
                 filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
                 if(filteredmsg.slice(0, 3) === "/me") {
-                    filteredmsg = "<i><b>" + player.username + "</b> " + filteredmsg + "</i>"
+                    filteredmsg = "<i><b>" + player.username + "</b> " + filteredmsg.slice(3) + "</i>"
                 } else {
                     filteredmsg = "<b>" + player.username + ":</b> " + filteredmsg;
                 }
                 gameEmit(game, "chatUpdate", filteredmsg)
             }
+            callback()
+        } else if(!game) {
+            socket.emit("chatUpdate", "Get in a game first to chat.")
+            callback()
+        } else if(msg === "/me"){
+            socket.emit("chatUpdate", "Invalid command.")
             callback()
         }
     })
