@@ -346,8 +346,8 @@ socket.on("joinedGame", function (gameObj) {
     }
     var final_message
     if(members < 5 && !joinedGame) {
-
-        final_message = $("<p />").html("You've joined the game! Invite your friends with this link: <input type='text' size='60' id='select' onclick='selectText(\"select\")' value='" + window.location.protocol + "//" + window.location.hostname + "/" + "join?id=" + gameObj.id + "'>");
+        var chatBoxWidth = document.getElementById("history").style.width
+        final_message = $("<p />").html("You've joined the game! Invite your friends with this link: <input type='text' style='width: " + (parseInt(chatBoxWidth) * 0.8) + "px;' id='select' onclick='selectText(\"select\")' value='" + window.location.protocol + "//" + window.location.hostname + "/" + "join?id=" + gameObj.id + "'>");
         $("#history").append(final_message);
         var container = document.getElementById("history")
         if (firstTime) {
