@@ -204,8 +204,12 @@ function draw() {
 }
 function touchMoved() {
     //do nothing
-    if(touches.length === 1 && touches[0].x < 640 && touches[0].y < 480)
-        return false
+    if(touches.length === 1 && touches[0].x < 640 && touches[0].y < 480) {
+        isInCanvas = true
+        return false;
+    } else {
+        isInCanvas = false
+    }
 }
 function mousePressed() {
     //on mouse press
