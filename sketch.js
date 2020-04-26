@@ -142,7 +142,7 @@ function draw() {
     chatWindow = document.getElementById('history');
 
     noFill();
-    if ((mouseIsPressed || touches.length === 1) && isInCanvas && inGame && ink > 0 && turn === playerRole) {
+    if ((mouseIsPressed || (touches.length === 1 && touches[0].x < 640 && touches[0].y < 480)) && isInCanvas && inGame && ink > 0 && turn === playerRole) {
         var mx, my
         if(mouseIsPressed) {
             mx = mouseX
@@ -207,7 +207,7 @@ function touchMoved() {
     if(touches.length === 1 && touches[0].x < 640 && touches[0].y < 480) {
         isInCanvas = true
         return false;
-    } else {
+    } else if(touches.length === 1) {
         isInCanvas = false
     }
 }
