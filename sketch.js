@@ -112,7 +112,7 @@ function setup() {
     textSize(32)
     text('Welcome to Draw Live!', 320, 240);
     var welcome = document.createElement("p")
-    welcome.innerHTML = "Welcome to Draw Live! If you don't know how to play, click <a href='about.txt'>here</a>."
+    welcome.innerHTML = "Welcome to Draw Live! If you don't know how to play, click <a href='about.txt' target='_blank'>here</a>."
     document.getElementById("history").appendChild(welcome)
     textAlign(LEFT)
 }
