@@ -1,38 +1,21 @@
-var app = require('http').createServer(response);
-var fs = require('fs');
-var io = require('socket.io')(app);
-var url = require('url');
-var ids = []
-var games = []
-var sockets = []
-
-/*app.get('/', function(req, res){
-  //console.log(req.url)
-  try {
-    if (fs.existsSync(req.url)) {
-      res.sendFile(__dirname + req.url);
-    }
-  } catch(err) {
-    console.error(err)
-  }
+var app = require('http').createServer(response); //http server module
+var fs = require('fs'); //filesystem module
+var io = require('socket.io')(app); //socket.io module
+var ids = [] //list of socket ids
+var games = [] //list of games
+var sockets = [] //list of connected sockets
 
 
-});*/
 async function response(req, res) {
+    /*
+    This function handles incoming HTTP requests and returns data
+     */
     var file = "";
     if (req.url === "/" || req.url.slice(0, 5) === "/join") {
         file = __dirname + "/index.html"
     } else if (req.url === "/app.js") {
         file = __dirname + "/no.txt"
-    } /*else if(req.url.slice(0, 5) === "/join") {
-        var query = url.parse(req.url, true).query
-        console.log(query)
-        for(var x = 0; x < games.length; x++) {
-            if(games[x].id === parseInt(query)) {
-                joinGame(socket.id, )
-            }
-        }
-    }*/ else {
+    }  else {
         file = __dirname + req.url;
     }
 
@@ -43,12 +26,11 @@ async function response(req, res) {
                 res.writeHead(404);
                 return res.end('Page or file not found');
             }
-
+            //set the correct MIME type
             if (req.url.substr(-3) === ".js") {
                 res.setHeader("Content-Type", "text/javascript")
             } else if (req.url.substr(-4) === ".css") {
                 res.setHeader("Content-Type", "text/css")
-                //console.log("sent css " + req.url)
             }
 
             res.writeHead(200);
@@ -58,15 +40,19 @@ async function response(req, res) {
     );
 
 }
-
+//start http server on port 3000 or process port for Heroku
 app.listen(process.env.PORT || 3000);
+//on a connection, what do we do
 io.on('connection', function (socket) {
     sockets.push(socket)
     ids.push(socket.id)
     socket.on('disconnect', function () {
+        //when the client has disconnected (tab closed, refreshed, etc)
+        //try and get the game they were in
         var game = getGameBySocketId(socket.id)
         if (game) {
             var player = getPlayerById(socket.id)
+            //handle the player leaving
             if (game.inGame) {
                 gameEmit(game, "alert", player.username + " left. Party's over.")
                 games.splice(games.indexOf(game), 1)
@@ -87,6 +73,7 @@ io.on('connection', function (socket) {
         }
     });
     socket.on("gamemsg", function (msg, callback) {
+        //game chat handler
         var game = getGameBySocketId(socket.id)
         if (game && msg !== "" && msg !== "/me") {
             var player = getPlayerById(socket.id)
@@ -132,7 +119,7 @@ io.on('connection', function (socket) {
                     games.splice(games.indexOf(game), 1)
                 }
             } else {
-                var filteredmsg = msg.replace(/\</g, "&lt;");   //for <
+                var filteredmsg = msg.replace(/\</g, "&lt;");
                 filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
                 if (filteredmsg.slice(0, 3) === "/me") {
                     filteredmsg = "<i><b>" + player.username + "</b> " + filteredmsg.slice(3) + "</i>"
@@ -151,6 +138,7 @@ io.on('connection', function (socket) {
         }
     })
     socket.on("createGame", function (name, fill) {
+        //create game handler
         if (name.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
             var game = getGameBySocketId(socket.id)
             if (!game) {
@@ -216,9 +204,9 @@ io.on('connection', function (socket) {
                     fillGame(newGame)
                 }
                 games.push(newGame)
-                //console.log("new game: " + JSON.stringify(newGame))
-                //console.log("all games: " + objArrayToString(games))
-                //console.log("includes new game: " + games.includes(newGame))
+
+
+
                 socket.emit("joinedGame", newGame)
             } else {
                 socket.emit("alert", "Already in a game. Reload to exit.")
@@ -228,6 +216,7 @@ io.on('connection', function (socket) {
         }
     })
     socket.on("joinGame", function (id, name) {
+        //join game handler
         var gameExists = getGameBySocketId(socket.id)
         if (name.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
             if (!gameExists) {
@@ -246,7 +235,7 @@ io.on('connection', function (socket) {
                             id: socket.id,
                             team: 0
                         }
-                        //console.log(teamFilled(game.team1))
+
                         if (!teamFilled(game.team1)) {
                             newPlayer.team = 1
                             if (isEmpty(game.team1.p1)) {
@@ -275,7 +264,7 @@ io.on('connection', function (socket) {
                         }
 
 
-                        //console.log(game)
+
 
                     } else {
                         socket.emit("alert", "Game is full.")
@@ -291,9 +280,10 @@ io.on('connection', function (socket) {
         }
     })
     socket.on("startGame", function (topicraw) {
+        //start game event
         if (topicraw !== "") {
-            var topic = topicraw.replace(/\</g, "&lt;");   //for <
-            topic = topic.replace(/\>/g, "&gt;"); //for >
+            var topic = topicraw.replace(/\</g, "&lt;");
+            topic = topic.replace(/\>/g, "&gt;");
             var game = getGameBySocketId(socket.id)
             var members = 0
             if (game) {
@@ -304,8 +294,8 @@ io.on('connection', function (socket) {
                     }
                 }
             }
-            //console.log("gameToStart: " + game)
-            //console.log("allGames: " + objArrayToString(games))
+
+
             if (game && members === 5) {
                 var player = getPlayerById(socket.id)
                 if (player.team === "judge") {
@@ -336,12 +326,13 @@ io.on('connection', function (socket) {
         }
     })
     socket.on("pathDrawn", function (path) {
+        //called on path completed
         var game = getGameBySocketId(socket.id)
         if (game && !game.paused) {
-            //console.log(0)
+
             var player = getPlayerById(socket.id)
             if (player.team !== "judge") {
-                //console.log(1)
+
                 var team = game["team" + player.team]
                 var playerRole;
                 if (team.p1.id === player.id) {
@@ -350,14 +341,14 @@ io.on('connection', function (socket) {
                     playerRole = 2
                 }
                 if (playerRole === team.turn) {
-                    //console.log(2)
+
                     var newPath = path
                     if (path.length >= team.ink) {
                         newPath = path.slice(0, team.ink)
                     }
                     team.ink -= newPath.length
                     if (team.ink <= 0) {
-                        //console.log(3)
+
                         if (playerRole === 1) {
                             team.turn = 2
                         } else {
@@ -365,7 +356,7 @@ io.on('connection', function (socket) {
                         }
                         team.paths.push(newPath)
                         team.ink = 30
-                        //io.to(`${team["p" + team.turn]}`).emit("alert", "Your turn!")
+
                     } else {
                         team.paths.push(newPath)
                         console.log(team.ink)
@@ -476,7 +467,7 @@ function gameEmit(game, toEmit, args) {
 function objArrayToString(arr) {
     var string = "[";
     for (var i = 0; i < arr.length; i++) {
-        if (i != arr.length - 1) {
+        if (i !== arr.length - 1) {
             string += JSON.stringify(arr[i]) + ", "
         } else {
             string += JSON.stringify(arr[i])
@@ -487,6 +478,7 @@ function objArrayToString(arr) {
 }
 
 function fillGame(game) {
+    //only for debug
     if (game) {
         game.team1.p1 = {
             username: getRandomInt(500001, 999999),

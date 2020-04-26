@@ -1,32 +1,37 @@
-var socket = io();
-var paths = [];
-let currentPath = [];
-var canvas;
-var cnv
-var center = "display: block; margin-right: auto; margin-left: auto;"
-var isInCanvas = false;
-var accent = "mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent"
-var seconds
-var inGame = false
-var playerRole
-var ink
-var turn
-var topic
-var paused
-var firstTime = true
-var joinedGame = false
+//declare global variables
+var socket = io(); //needed for socket connection
+var paths = []; //line paths
+let currentPath = []; //current drawing path
+var canvas; //actual p5 canvas
+var cnv //p5-declared canvas TODO: figure out if these are the same
+var center = "display: block; margin-right: auto; margin-left: auto;" //"center" style
+var isInCanvas = false;// is the mouse in canvas
+var accent = "mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" //button style
+var seconds //seconds left in the game
+var inGame = false //self-explanatory
+var playerRole //player's "number", 1 or 2
+var ink //ink left for player
+var turn //1 or 2, team's turn
+var topic //topic to draw
+var paused //is the game in between drawing sessions
+var firstTime = true //first time in chat
+var joinedGame = false //first time joining game
 function shouldJoinGame() {
+    //called at onload, handles if client has joined from a generated link
     if(window.location.pathname.slice(0, 5) === "/join" && getUrlParameter("id")) {
         joinGameWithId(parseInt(getUrlParameter("id")))
+        //join game using link query param
     }
 }
 function getUrlParameter(name) {
+    //returns value of a URL param given a key
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
     var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
     var results = regex.exec(location.search);
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 };
 function setup() {
+    //setup function required by p5.js. runs on browser onload
     cnv = createCanvas(640, 480);
     cnv.mouseOver(function () {
         isInCanvas = true
@@ -36,19 +41,14 @@ function setup() {
     })
     canvas = document.getElementsByClassName("p5Canvas")[0]
     canvas.style.display = "inline-block"
-    //canvas.style.marginLeft = "auto"
-    //canvas.style.marginRight = "auto"
     background(255)
     var chatbox = document.createElement("div")
     chatbox.id = "history"
     chatbox.style.display = "inline-block"
-    //chatbox.style.overflow = "scroll"
-    //chatbox.style = center
     var chatboxw = parseInt((window.innerWidth - parseInt(canvas.style.width)) * 0.9)
     var chatstyle = "display: inline-block; height: " + parseInt(canvas.style.height) * 0.9 + "px; width: " + chatboxw.toString() + "px; float: right;"
     console.log(chatstyle)
     chatbox.setAttribute("style", chatstyle)
-    //chatbox.setAttribute("height", canvas.height)
     document.body.appendChild(chatbox)
     var form = document.createElement("form")
     form.id = "chat"
@@ -84,7 +84,6 @@ function setup() {
     document.body.appendChild(document.createElement("br"))
     document.body.appendChild(document.createElement("br"))
     var div = document.createElement("div")
-    //div.style = "display: block; margin-left: auto; margin-right: auto;"
     var createBtn = document.createElement("button")
     createBtn.innerText = "Create Game"
     createBtn.className = accent
@@ -119,9 +118,8 @@ function setup() {
 }
 
 function draw() {
-
+    //p5js function. runs repeatedly
     if (inGame && seconds !== undefined) {
-        //console.log(seconds)
         fill(255)
         noStroke()
         rect(9, 0, 40, 40)
@@ -142,13 +140,6 @@ function draw() {
         text("Draw " + topic + "!", 10, 450)
     }
     chatWindow = document.getElementById('history');
-
-    //if (!chatWindow.scrollTop >= (chatWindow.scrollHeight - chatWindow.offsetHeight)) {
-    //chatWindow.scrollTop = chatWindow.scrollHeight;
-    //var xH = chatWindow.scrollHeight;
-    //chatWindow.scrollTo(0, xH);
-
-    //}
 
     noFill();
     if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
@@ -176,7 +167,6 @@ function draw() {
         }
 
     }
-    //console.log(paths)
     if (!paused) {
         if (playerRole !== "judge") {
             for (var x = 0; x < paths.length; x++) {
@@ -206,13 +196,14 @@ function draw() {
 }
 
 function mousePressed() {
-
+    //on mouse press
     currentPath = [];
     paths.push(currentPath);
 
 }
 
 function mouseReleased() {
+    //on mouse release
     if (inGame && currentPath.length !== 0) {
         socket.emit("pathDrawn", currentPath)
         console.log(currentPath)
@@ -220,6 +211,7 @@ function mouseReleased() {
 }
 
 function createGame(fill) {
+    //create game through button
     var username
     Swal.fire({
         title: 'Enter a username between 4 and 15 characters long letters only',
@@ -237,6 +229,7 @@ function createGame(fill) {
 }
 
 function joinGame() {
+    //join game through button
     var gameId, username
     Swal.fire({
         title: 'Enter a game id',
@@ -269,6 +262,7 @@ function joinGame() {
 
 }
 function joinGameWithId(id) {
+    //join game with URL query param (no button)
     var username
         Swal.fire({
             title: 'Enter a username between 4 and 15 characters long letters only',
@@ -287,6 +281,7 @@ function joinGameWithId(id) {
 
 }
 function selectText(containerid) {
+    //auto select text in div
     if (document.selection) { // IE
         var range = document.body.createTextRange();
         range.moveToElementText(document.getElementById(containerid));
@@ -299,6 +294,7 @@ function selectText(containerid) {
     }
 }
 socket.on("alert", function (content) {
+    //custom swal alert on server event
     Swal.fire(content)
     if(content.includes(" left. Party's over.") || content.includes("Host left the game, reloading...") || (content.html && content.includes("Team 1 score:"))) {
         setTimeout(function() {
@@ -307,7 +303,7 @@ socket.on("alert", function (content) {
     }
 })
 socket.on("joinedGame", function (gameObj) {
-
+    //on player join
     if (document.getElementById("startBtn")) {
         document.body.removeChild(document.getElementById("startBtn"))
     }
@@ -360,6 +356,7 @@ socket.on("joinedGame", function (gameObj) {
     joinedGame = true
 })
 socket.on("chatUpdate", function (msg) {
+    //on chat updated
     var final_message = $("<p />").html(msg);
     $("#history").append(final_message);
     var container = document.getElementById("history")
@@ -371,6 +368,7 @@ socket.on("chatUpdate", function (msg) {
     }
 });
 socket.on("gameStarted", function (game) {
+    //on game start
     clear()
     background(255)
     inGame = true
@@ -394,7 +392,7 @@ socket.on("gameStarted", function (game) {
             teamRole = 1
         }
         document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game. You are on Team " + currentPlayer.team + " and your teammate is " + game["team" + currentPlayer.team]["p" + teamRole].username + "."
-        //clear()
+
         seconds = game.timeout / 1000
         ink = game["team" + currentPlayer.team].ink
         turn = game["team" + currentPlayer.team].turn
@@ -424,9 +422,11 @@ socket.on("gameStarted", function (game) {
 
 })
 socket.on("updateTime", function (timeLeft) {
+    //update the time left in game
     seconds = timeLeft
 })
 socket.on("updateInk", function (inkLeft, newPaths, newTurn) {
+    //updated ink left
     ink = inkLeft
     paths = newPaths
     turn = newTurn
@@ -448,6 +448,7 @@ socket.on("updateInk", function (inkLeft, newPaths, newTurn) {
     noFill();
 })
 socket.on("roundOver", function (game, paths1, paths2) {
+    //on round over
     var currentPlayer = getPlayerById(socket.id, game)
     paused = true
     console.log(paths1)
@@ -474,14 +475,17 @@ socket.on("roundOver", function (game, paths1, paths2) {
 })
 
 function isEmpty(obj) {
+    //is the object empty
     return Object.keys(obj).length === 0;
 }
 
 function getRandomInt(min, max) {
+    //random integer in range. min inclusive max exclusive
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
 function startGame() {
+    //start game through button
     var topic
     Swal.fire({
         title: 'Enter a topic for the contestants to draw',
@@ -499,6 +503,7 @@ function startGame() {
 }
 
 function getPlayerById(id, game) {
+    //get player by socket id
     if (game) {
         var players = getPlayers(game)
         for (var x = 0; x < players.length; x++) {
@@ -512,6 +517,7 @@ function getPlayerById(id, game) {
 }
 
 function getPlayers(game) {
+    //returns array of players in game
     var players = []
     players.push(game.judge)
     players.push(game.team1.p1)
@@ -522,11 +528,11 @@ function getPlayers(game) {
 }
 
 function drawMultiplePaths(paths1, paths2) {
+    //draw paths on round complete
     for (var x = 0; x < paths1.length; x++) {
         var path = paths1[x]
         if (path.length !== 0) {
             beginShape();
-            //noFill();
             path.forEach(point => {
                 stroke(point.color);
                 strokeWeight(point.weight);
@@ -539,7 +545,6 @@ function drawMultiplePaths(paths1, paths2) {
         var path = paths2[x]
         if (path.length !== 0) {
             beginShape();
-            //noFill();
             path.forEach(point => {
                 stroke(point.color);
                 strokeWeight(point.weight);
