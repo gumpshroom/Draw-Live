@@ -142,13 +142,21 @@ function draw() {
     chatWindow = document.getElementById('history');
 
     noFill();
-    if (mouseIsPressed && isInCanvas && inGame && ink > 0 && turn === playerRole) {
+    if ((mouseIsPressed || touches.length === 1) && isInCanvas && inGame && ink > 0 && turn === playerRole) {
+        var mx, my
+        if(mouseIsPressed) {
+            mx = mouseX
+            my = mouseY
+        } else {
+            mx = touches[0].x
+            my = touches[0].y
+        }
         if(currentPath.length !== 0) {
             var distThisLast = Math.hypot(mouseX - currentPath[currentPath.length - 1].x, mouseY - currentPath[currentPath.length - 1].y)
             if (distThisLast >= 5) {
                 const point = {
-                    x: mouseX,
-                    y: mouseY,
+                    x: mx,
+                    y: my,
                     color: 0,
                     weight: 3
                 };
@@ -157,8 +165,8 @@ function draw() {
             }
         } else {
             const point = {
-                x: mouseX,
-                y: mouseY,
+                x: mx,
+                y: my,
                 color: 0,
                 weight: 3
             };
@@ -201,7 +209,13 @@ function mousePressed() {
     paths.push(currentPath);
 
 }
-
+function touchEnded() {
+    //on touch release, do the same thing as mouse
+    if (inGame && currentPath.length !== 0) {
+        socket.emit("pathDrawn", currentPath)
+        console.log(currentPath)
+    }
+}
 function mouseReleased() {
     //on mouse release
     if (inGame && currentPath.length !== 0) {
@@ -209,6 +223,7 @@ function mouseReleased() {
         console.log(currentPath)
     }
 }
+
 
 function createGame(fill) {
     //create game through button
