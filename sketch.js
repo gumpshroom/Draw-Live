@@ -202,7 +202,10 @@ function draw() {
         }
     }
 }
-
+function touchMoved() {
+    //do nothing
+    return false
+}
 function mousePressed() {
     //on mouse press
     currentPath = [];
