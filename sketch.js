@@ -122,7 +122,7 @@ function draw() {
     if (inGame && seconds !== undefined) {
         fill(255)
         noStroke()
-        rect(9, 0, 40, 40)
+        rect(9, 0, 63, 40)
         fill(0)
         textSize(32)
         text(seconds, 10, 30)
@@ -231,23 +231,62 @@ function mouseReleased() {
         console.log(currentPath)
     }
 }
+function submitCreateGame() {
+    var gameConfig = {
+        rounds: $("#rounds").val(),
+        gametime: $("#gametime").val(),
+        username: $("#username").val(),
+        maxInk: $("#ink").val()
+    };
+    socket.emit("createGame", gameConfig, $("#fill").val() === "true")
+    Swal.close()
+}
+function getRandomName() {
+    var nameList = [
+        'Time', 'Past', 'Future', 'Dev',
+        'Fly', 'Flying', 'Soar', 'Soaring', 'Power', 'Falling',
+        'Fall', 'Jump', 'Cliff', 'Mountain', 'Rend', 'Red', 'Blue',
+        'Green', 'Yellow', 'Gold', 'Demon', 'Demonic', 'Panda', 'Cat',
+        'Kitty', 'Kitten', 'Zero', 'Memory', 'Trooper', 'XX', 'Bandit',
+        'Fear', 'Light', 'Glow', 'Tread', 'Deep', 'Deeper', 'Deepest',
+        'Mine', 'Your', 'Worst', 'Enemy', 'Hostile', 'Force', 'Video',
+        'Game', 'Donkey', 'Mule', 'Colt', 'Cult', 'Cultist', 'Magnum',
+        'Gun', 'Assault', 'Recon', 'Trap', 'Trapper', 'Redeem', 'Code',
+        'Script', 'Writer', 'Near', 'Close', 'Open', 'Cube', 'Circle',
+        'Geo', 'Genome', 'Germ', 'Spaz', 'Shot', 'Echo', 'Beta', 'Alpha',
+        'Gamma', 'Omega', 'Seal', 'Squid', 'Money', 'Cash', 'Lord', 'King',
+        'Duke', 'Rest', 'Fire', 'Flame', 'Morrow', 'Break', 'Breaker', 'Numb',
+        'Ice', 'Cold', 'Rotten', 'Sick', 'Sickly', 'Janitor', 'Camel', 'Rooster',
+        'Sand', 'Desert', 'Dessert', 'Hurdle', 'Racer', 'Eraser', 'Erase', 'Big',
+        'Small', 'Short', 'Tall', 'Sith', 'Bounty', 'Hunter', 'Cracked', 'Broken',
+        'Sad', 'Happy', 'Joy', 'Joyful', 'Crimson', 'Destiny', 'Deceit', 'Lies',
+        'Lie', 'Honest', 'Destined', 'Bloxxer', 'Hawk', 'Eagle', 'Hawker', 'Walker',
+        'Zombie', 'Sarge', 'Capt', 'Captain', 'Punch', 'One', 'Two', 'Uno', 'Slice',
+        'Slash', 'Melt', 'Melted', 'Melting', 'Fell', 'Wolf', 'Hound',
+        'Legacy', 'Sharp', 'Dead', 'Mew', 'Chuckle', 'Bubba', 'Bubble', 'Sandwich', 'Smasher', 'Extreme', 'Multi', 'Universe', 'Ultimate', 'Death', 'Ready', 'Monkey', 'Elevator', 'Wrench', 'Grease', 'Head', 'Theme', 'Grand', 'Cool', 'Kid', 'Boy', 'Girl', 'Vortex', 'Paradox'
+    ];
 
-
+    var name = "";
+    var selector = getRandomInt(1, 3);
+    name = nameList[Math.floor(Math.random() * nameList.length)];
+    name += nameList[Math.floor(Math.random() * nameList.length)];
+    return name;
+};
 function createGame(fill) {
     //create game through button
-    var username
+    var username = getRandomName()
+    var html = '<form><label for="username">Enter a username between 4 and 20 characters long no special chars except underscore</label><br><input type="text" id="username" name="username" size="20" value="' + username + '"><br>' +
+        '<br><label for="gametime">Enter a custom time limit in minutes (1 to 5 minutes)</label><br><input type="number" size="1" id="gametime" name="gametime" value="1"><br>' +
+        '<br><label for="rounds">Enter a custom number of rounds (1 to 11)</label><br><input type="number" size="2" id="rounds" name="rounds" value="5"><br>' +
+        '<br><label for="ink">Enter a custom ink limit (20 to 80)</label><br><input type="number" size="2" id="ink" name="ink" value="30"><br>' +
+        '<input type="hidden" value="' + fill + '"' +
+        '<br><br><input type="button" onclick="submitCreateGame()" class="swal2-confirm swal2-styled" value="Create Game!"></form>'
+
     Swal.fire({
-        title: 'Enter a username between 4 and 15 characters long letters only',
-        input: 'text',
-        showCancelButton: true,
-        inputValidator: (value) => {
-            if (!value.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
-                return 'Specify a username between 4 and 15 characters long letters only'
-            } else {
-                username = value
-                socket.emit("createGame", username, fill)
-            }
-        }
+        title: 'Creating a game',
+        html: html,
+        showCancelButton: false,
+        showConfirmButton: false
     })
 }
 
@@ -268,12 +307,17 @@ function joinGame() {
         }
     }).then(function () {
         Swal.fire({
-            title: 'Enter a username between 4 and 15 characters long letters only',
+            title: 'Enter a username between 4 and 20 characters long no special chars except underscore',
             input: 'text',
             showCancelButton: true,
+            inputValue: getRandomName(),
+            onOpen: function() {
+                var input = swal.getInput()
+                input.setSelectionRange(0, input.value.length)
+            },
             inputValidator: (value) => {
-                if (!value.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
-                    return 'Specify a username between 4 and 15 characters long letters only'
+                if (!value.match("^(?=[A-Za-z_\\d]*[A-Za-z])[A-Za-z_\\d]{4,20}$")) {
+                    return 'Specify a username between 4 and 20 characters long no special chars except underscore'
                 } else {
                     username = value
                     socket.emit("joinGame", gameId, username)
@@ -288,12 +332,17 @@ function joinGameWithId(id) {
     //join game with URL query param (no button)
     var username
         Swal.fire({
-            title: 'Enter a username between 4 and 15 characters long letters only',
+            title: 'Enter a username between 4 and 20 characters long no special chars except underscore',
             input: 'text',
             showCancelButton: true,
+            inputValue: getRandomName(),
+            onOpen: function() {
+                var input = swal.getInput()
+                input.setSelectionRange(0, input.value.length)
+            },
             inputValidator: (value) => {
-                if (!value.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
-                    return 'Specify a username between 4 and 15 characters long letters only'
+                if (!value.match("^(?=[A-Za-z_\\d]*[A-Za-z])[A-Za-z_\\d]{4,20}$")) {
+                    return 'Specify a username between 4 and 20 characters long no special chars except underscore'
                 } else {
                     username = value
                     socket.emit("joinGame", id, username)
@@ -353,7 +402,9 @@ socket.on("joinedGame", function (gameObj) {
         members++
     }
     gameInfo.innerText = "You're in game " + gameObj.id + " with " + members + " member(s). You need 5 to play."
+    gameInfo.innerHTML += "<br>Rounds: " + gameObj.maxRound + "<br>Time Limit: " + (parseInt(gameObj.maxTime) / 60000) + " minute(s)" + "<br>Ink Limit: " + gameObj.maxInk
     gameInfo.innerHTML += "<br>Judge: " + gameObj.judge.username + "<br>Team 1: " + t1p1 + " and " + t1p2 + "<br>Team 2: " + t2p1 + " and " + t2p2
+
     if (members === 5 && gameObj.judge.id === socket.id) {
         var startBtn = document.createElement("button")
         startBtn.innerText = "Start"

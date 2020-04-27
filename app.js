@@ -83,7 +83,7 @@ io.on('connection', function (socket) {
                     gameEmit(game, "chatUpdate", "Team " + game.left + " won the round!")
                     gameEmit(game, "chatUpdate", "Team 1 (" + game.team1.p1.username + " and " + game.team1.p2.username + ") score: " + game.team1.score)
                     gameEmit(game, "chatUpdate", "Team 2 (" + game.team2.p1.username + " and " + game.team2.p2.username + ") score: " + game.team2.score)
-                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (5 - game.round + 1))
+                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (game.maxRound - game.round + 1))
                     io.to(`${game["team" + game.left].p1.id}`).emit("alert", "Your team won the round!")
                     io.to(`${game["team" + game.left].p2.id}`).emit("alert", "Your team won the round!")
                     game.left = 0
@@ -93,13 +93,13 @@ io.on('connection', function (socket) {
                     gameEmit(game, "chatUpdate", "Team " + game.right + " won the round!")
                     gameEmit(game, "chatUpdate", "Team 1 (" + game.team1.p1.username + " and " + game.team1.p2.username + ") score: " + game.team1.score)
                     gameEmit(game, "chatUpdate", "Team 2 (" + game.team2.p1.username + " and " + game.team2.p2.username + ") score: " + game.team2.score)
-                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (5 - game.round + 1))
+                    gameEmit(game, "chatUpdate", "Rounds remaining: " + (game.maxRound - game.round + 1))
                     io.to(`${game["team" + game.right].p1.id}`).emit("alert", "Your team won the round!")
                     io.to(`${game["team" + game.right].p2.id}`).emit("alert", "Your team won the round!")
                     game.left = 0
                     game.right = 0
                 }
-                if (game.round > 5) {
+                if (game.round > game.maxRound) {
                     if (game.team1.score > game.team2.score) {
                         gameEmit(game, "alert", {
                             title: "Team 1 wins!",
@@ -137,9 +137,13 @@ io.on('connection', function (socket) {
             callback()
         }
     })
-    socket.on("createGame", function (name, fill) {
+    socket.on("createGame", function (input, fill) {
         //create game handler
-        if (name.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
+        var name = input.username
+        var rounds = parseInt(input.rounds)
+        var time = parseInt(input.gametime)
+        var maxInkAmt = parseInt(input.maxInk)
+        if (name.match("^(?=[A-Za-z_\\d]*[A-Za-z])[A-Za-z_\\d]{4,20}$") && name !== "nobody" && rounds <= 11 && rounds >= 1 && time >= 1 && time <= 5 && maxInkAmt <= 80 && maxInkAmt >= 20) {
             var game = getGameBySocketId(socket.id)
             if (!game) {
                 var newPlayer = {
@@ -152,7 +156,8 @@ io.on('connection', function (socket) {
                     p2: {},
                     paths: [],
                     turn: 1,
-                    ink: 30,
+                    ink: maxInkAmt,
+                    maxInk: maxInkAmt,
                     score: 0
                 }
                 var newTeam2 = {
@@ -160,15 +165,19 @@ io.on('connection', function (socket) {
                     p2: {},
                     paths: [],
                     turn: 1,
-                    ink: 30,
+                    ink: maxInkAmt,
+                    maxInk: maxInkAmt,
                     score: 0
                 }
                 var newGame = {
                     team1: newTeam1,
                     team2: newTeam2,
                     judge: newPlayer,
-                    timeout: 60000,
                     round: 1,
+                    maxTime: time * 60000,
+                    timeout: time * 60000,
+                    maxRound: rounds,
+                    maxInk: maxInkAmt,
                     topic: "",
                     left: 0,
                     right: 0,
@@ -176,7 +185,7 @@ io.on('connection', function (socket) {
                     paused: true,
                     id: getUniqueGameId(),
                     finishRound: function () {
-                        if (this.round <= 5) {
+                        if (this.round <= this.maxRound) {
                             var randomNum = getRandomInt(1, 3)
                             var hiddenGameObj = JSON.parse(JSON.stringify(this))
                             this.left = randomNum
@@ -188,9 +197,9 @@ io.on('connection', function (socket) {
                                 }
                             }
                             gameEmit(this, "chatUpdate", this.judge.username + ", please look at your screen and say <b>right</b> or <b>left</b> in the chat to decide the victor of this round.")
-                            this.timeout = 60000
-                            this.team1.ink = 30
-                            this.team2.ink = 30
+                            this.timeout = this.maxTime
+                            this.team1.ink = this.maxInk
+                            this.team2.ink = this.maxInk
                             this.team1.turn = 1
                             this.team2.turn = 1
                             this.team1.paths = []
@@ -212,13 +221,14 @@ io.on('connection', function (socket) {
                 socket.emit("alert", "Already in a game. Reload to exit.")
             }
         } else {
-            socket.emit("alert", "Bad username. Try again.")
+            socket.emit("alert", "Bad input. Try again.")
+            console.log(input)
         }
     })
     socket.on("joinGame", function (id, name) {
         //join game handler
         var gameExists = getGameBySocketId(socket.id)
-        if (name.match("^[a-zA-Z0-9_]{3,15}[a-zA-Z]+[0-9]*$")) {
+        if (name.match("^(?=[A-Za-z_\\d]*[A-Za-z])[A-Za-z_\\d]{4,20}$") && name !== "nobody") {
             if (!gameExists) {
                 console.log(findObjectByKey(games, "id", parseInt(id)))
                 if (findObjectByKey(games, "id", parseInt(id)) && gameNameTaken(name, findObjectByKey(games, "id", parseInt(id))) === false) {
@@ -294,8 +304,6 @@ io.on('connection', function (socket) {
                     }
                 }
             }
-
-
             if (game && members === 5) {
                 var player = getPlayerById(socket.id)
                 if (player.team === "judge") {
@@ -355,7 +363,7 @@ io.on('connection', function (socket) {
                             team.turn = 1
                         }
                         team.paths.push(newPath)
-                        team.ink = 30
+                        team.ink = game.maxInk
 
                     } else {
                         team.paths.push(newPath)
