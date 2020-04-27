@@ -1,6 +1,7 @@
 var app = require('http').createServer(response); //http server module
 var fs = require('fs'); //filesystem module
 var io = require('socket.io')(app); //socket.io module
+var sentencer = require('sentencer') //suggest topics
 var ids = [] //list of socket ids
 var games = [] //list of games
 var sockets = [] //list of connected sockets
@@ -136,6 +137,9 @@ io.on('connection', function (socket) {
             socket.emit("chatUpdate", "Invalid command.")
             callback()
         }
+    })
+    socket.on("getRandomTopic", function() {
+        socket.emit("receivedRandomTopic", sentencer.make("{{ an_adjective }} {{noun}}"))
     })
     socket.on("createGame", function (input, fill) {
         //create game handler

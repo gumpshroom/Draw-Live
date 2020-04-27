@@ -559,11 +559,18 @@ function getRandomInt(min, max) {
 }
 
 function startGame() {
-    //start game through button
-    var topic
+    //start game through button, wait for response of server for random topic
+    socket.emit("getRandomTopic")
+}
+socket.on("receivedRandomTopic", function(topic) {
     Swal.fire({
         title: 'Enter a topic for the contestants to draw',
         input: 'text',
+        inputValue: topic,
+        onOpen: function() {
+            var input = swal.getInput()
+            input.setSelectionRange(0, input.value.length)
+        },
         showCancelButton: true,
         inputValidator: (value) => {
             if (!value) {
@@ -574,8 +581,7 @@ function startGame() {
             }
         }
     })
-}
-
+})
 function getPlayerById(id, game) {
     //get player by socket id
     if (game) {
