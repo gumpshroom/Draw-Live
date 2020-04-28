@@ -488,7 +488,7 @@ socket.on("gameStarted", function (game) {
             text("Their Turn!", 250, 30)
         }
         noFill();
-        Swal.fire("Game started!", "You have 60 seconds to draw <b>" + game.topic + "</b> with your teammate, " + game["team" + currentPlayer.team]["p" + teamRole].username + "!")
+        Swal.fire("Game started!", "You have " + (parseInt(game.maxTime) / 1000) + " seconds to draw <b>" + game.topic + "</b> with your teammate, " + game["team" + currentPlayer.team]["p" + teamRole].username + "!")
     } else {
         document.getElementById("gameInfo").innerHTML = "You (<b>" + currentPlayer.username + "</b>) are in a game. You are the judge."
         playerRole = 'judge'
