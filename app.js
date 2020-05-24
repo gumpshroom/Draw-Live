@@ -1,7 +1,7 @@
 var app = require('http').createServer(response); //http server module
 var fs = require('fs'); //filesystem module
 var io = require('socket.io')(app); //socket.io module
-var sentencer = require('sentencer') //suggest topics
+var sentencer = require('sentencer') //for suggesting topics
 var ids = [] //list of socket ids
 var games = [] //list of games
 var sockets = [] //list of connected sockets
@@ -43,6 +43,7 @@ async function response(req, res) {
 }
 //start http server on port 3000 or process port for Heroku
 app.listen(process.env.PORT || 3000);
+console.log("Listening on port 3000")
 //on a connection, what do we do
 io.on('connection', function (socket) {
     sockets.push(socket)
@@ -100,6 +101,7 @@ io.on('connection', function (socket) {
                     game.left = 0
                     game.right = 0
                 }
+                game.readyNextRound = true
                 if (game.round > game.maxRound) {
                     if (game.team1.score > game.team2.score) {
                         gameEmit(game, "alert", {
@@ -112,6 +114,7 @@ io.on('connection', function (socket) {
                             html: "Team 1 score: " + game.team1.score + "<br>Team 2 score: " + game.team2.score + "<br>Refresh to play again!"
                         })
                     } else {
+                        //we shouldn't get here ever, but just in case...
                         gameEmit(game, "alert", {
                             title: "Tie!",
                             html: "Team 1 score: " + game.team1.score + "<br>Team 2 score: " + game.team2.score + "<br>Refresh to play again!"
@@ -120,8 +123,10 @@ io.on('connection', function (socket) {
                     games.splice(games.indexOf(game), 1)
                 }
             } else {
-                var filteredmsg = msg.replace(/\</g, "&lt;");
+                var filteredmsg = msg.slice(0, 200)
+                filteredmsg = filteredmsg.replace(/\</g, "&lt;");
                 filteredmsg = filteredmsg.replace(/\>/g, "&gt;");
+
                 if (filteredmsg.slice(0, 3) === "/me") {
                     filteredmsg = "<i><b>" + player.username + "</b> " + filteredmsg.slice(3) + "</i>"
                 } else {
@@ -129,6 +134,7 @@ io.on('connection', function (socket) {
                 }
                 gameEmit(game, "chatUpdate", filteredmsg)
             }
+
             callback()
         } else if (!game) {
             socket.emit("chatUpdate", "Get in a game first to chat.")
@@ -187,6 +193,7 @@ io.on('connection', function (socket) {
                     right: 0,
                     inGame: false,
                     paused: true,
+                    readyNextRound: true,
                     id: getUniqueGameId(),
                     finishRound: function () {
                         if (this.round <= this.maxRound) {
@@ -210,6 +217,7 @@ io.on('connection', function (socket) {
                             this.team2.paths = []
                             this.round++
                             this.paused = true
+                            this.readyNextRound = false
                         }
                     }
                 }
@@ -217,8 +225,6 @@ io.on('connection', function (socket) {
                     fillGame(newGame)
                 }
                 games.push(newGame)
-
-
 
                 socket.emit("joinedGame", newGame)
             } else {
@@ -308,7 +314,7 @@ io.on('connection', function (socket) {
                     }
                 }
             }
-            if (game && members === 5) {
+            if (game && members === 5 && game.readyNextRound) {
                 var player = getPlayerById(socket.id)
                 if (player.team === "judge") {
                     game.topic = topic

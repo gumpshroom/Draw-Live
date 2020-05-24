@@ -16,6 +16,8 @@ var topic //topic to draw
 var paused //is the game in between drawing sessions
 var firstTime = true //first time in chat
 var joinedGame = false //first time joining game
+
+
 function shouldJoinGame() {
     //called at onload, handles if client has joined from a generated link
     if(window.location.pathname.slice(0, 5) === "/join" && getUrlParameter("id")) {
@@ -39,6 +41,12 @@ function setup() {
     cnv.mouseOut(function () {
         isInCanvas = false
     })
+    document.onkeypress = function(e) {
+        if(e.key === "Enter") {
+            console.log(e)
+            $("#msg_text").select()
+        }
+    }
     canvas = document.getElementsByClassName("p5Canvas")[0]
     canvas.style.display = "inline-block"
     background(255)
@@ -46,12 +54,13 @@ function setup() {
     chatbox.id = "history"
     chatbox.style.display = "inline-block"
     var chatboxw = parseInt((window.innerWidth - parseInt(canvas.style.width)) * 0.9)
-    var chatstyle = "display: inline-block; height: " + parseInt(canvas.style.height) * 0.9 + "px; width: " + chatboxw.toString() + "px; float: right;"
+    var chatstyle = "display: inline-block; height: " + parseInt(canvas.style.height) * 0.9 + "px; width: " + chatboxw.toString() + "px; float: right; overflow-wrap: break-word;"
     console.log(chatstyle)
     chatbox.setAttribute("style", chatstyle)
     document.body.appendChild(chatbox)
     var form = document.createElement("form")
     form.id = "chat"
+    form.autocomplete = "off"
     form.style.display = 'inline'
     var textInput = document.createElement("input")
     textInput.type = "text"
@@ -241,40 +250,10 @@ function submitCreateGame() {
     socket.emit("createGame", gameConfig, $("#fill").val() === "true")
     Swal.close()
 }
-function getRandomName() {
-    var nameList = [
-        'Time', 'Past', 'Future', 'Dev',
-        'Fly', 'Flying', 'Soar', 'Soaring', 'Power', 'Falling',
-        'Fall', 'Jump', 'Cliff', 'Mountain', 'Rend', 'Red', 'Blue',
-        'Green', 'Yellow', 'Gold', 'Demon', 'Demonic', 'Panda', 'Cat',
-        'Kitty', 'Kitten', 'Zero', 'Memory', 'Trooper', 'XX', 'Bandit',
-        'Fear', 'Light', 'Glow', 'Tread', 'Deep', 'Deeper', 'Deepest',
-        'Mine', 'Your', 'Worst', 'Enemy', 'Hostile', 'Force', 'Video',
-        'Game', 'Donkey', 'Mule', 'Colt', 'Cult', 'Cultist', 'Magnum',
-        'Gun', 'Assault', 'Recon', 'Trap', 'Trapper', 'Redeem', 'Code',
-        'Script', 'Writer', 'Near', 'Close', 'Open', 'Cube', 'Circle',
-        'Geo', 'Genome', 'Germ', 'Spaz', 'Shot', 'Echo', 'Beta', 'Alpha',
-        'Gamma', 'Omega', 'Seal', 'Squid', 'Money', 'Cash', 'Lord', 'King',
-        'Duke', 'Rest', 'Fire', 'Flame', 'Morrow', 'Break', 'Breaker', 'Numb',
-        'Ice', 'Cold', 'Rotten', 'Sick', 'Sickly', 'Janitor', 'Camel', 'Rooster',
-        'Sand', 'Desert', 'Dessert', 'Hurdle', 'Racer', 'Eraser', 'Erase', 'Big',
-        'Small', 'Short', 'Tall', 'Sith', 'Bounty', 'Hunter', 'Cracked', 'Broken',
-        'Sad', 'Happy', 'Joy', 'Joyful', 'Crimson', 'Destiny', 'Deceit', 'Lies',
-        'Lie', 'Honest', 'Destined', 'Bloxxer', 'Hawk', 'Eagle', 'Hawker', 'Walker',
-        'Zombie', 'Sarge', 'Capt', 'Captain', 'Punch', 'One', 'Two', 'Uno', 'Slice',
-        'Slash', 'Melt', 'Melted', 'Melting', 'Fell', 'Wolf', 'Hound',
-        'Legacy', 'Sharp', 'Dead', 'Mew', 'Chuckle', 'Bubba', 'Bubble', 'Sandwich', 'Smasher', 'Extreme', 'Multi', 'Universe', 'Ultimate', 'Death', 'Ready', 'Monkey', 'Elevator', 'Wrench', 'Grease', 'Head', 'Theme', 'Grand', 'Cool', 'Kid', 'Boy', 'Girl', 'Vortex', 'Paradox'
-    ];
 
-    var name = "";
-    var selector = getRandomInt(1, 3);
-    name = nameList[Math.floor(Math.random() * nameList.length)];
-    name += nameList[Math.floor(Math.random() * nameList.length)];
-    return name;
-};
 function createGame(fill) {
     //create game through button
-    var username = getRandomName()
+    var username = "" //was used for a random name (removed).
     var html = '<form><label for="username">Enter a username between 4 and 20 characters long no special chars except underscore</label><br><input type="text" id="username" name="username" size="20" value="' + username + '"><br>' +
         '<br><label for="gametime">Enter a custom time limit in minutes (1 to 5 minutes)</label><br><input type="number" size="1" id="gametime" name="gametime" value="1"><br>' +
         '<br><label for="rounds">Enter a custom number of rounds (1 to 11)</label><br><input type="number" size="2" id="rounds" name="rounds" value="5"><br>' +
@@ -310,7 +289,7 @@ function joinGame() {
             title: 'Enter a username between 4 and 20 characters long no special chars except underscore',
             input: 'text',
             showCancelButton: true,
-            inputValue: getRandomName(),
+
             onOpen: function() {
                 var input = swal.getInput()
                 input.setSelectionRange(0, input.value.length)
@@ -335,7 +314,7 @@ function joinGameWithId(id) {
             title: 'Enter a username between 4 and 20 characters long no special chars except underscore',
             input: 'text',
             showCancelButton: true,
-            inputValue: getRandomName(),
+
             onOpen: function() {
                 var input = swal.getInput()
                 input.setSelectionRange(0, input.value.length)
@@ -375,7 +354,7 @@ socket.on("alert", function (content) {
     }
 })
 socket.on("joinedGame", function (gameObj) {
-    //on player join
+    //on player join (or leave)
     if (document.getElementById("startBtn")) {
         document.body.removeChild(document.getElementById("startBtn"))
     }
@@ -615,7 +594,7 @@ function drawMultiplePaths(paths1, paths2) {
             beginShape();
             path.forEach(point => {
                 stroke(point.color);
-                strokeWeight(point.weight);
+                strokeWeight(point.weight / 2);
                 vertex(point.x / 2, point.y / 2);
             });
             endShape();
@@ -627,7 +606,7 @@ function drawMultiplePaths(paths1, paths2) {
             beginShape();
             path.forEach(point => {
                 stroke(point.color);
-                strokeWeight(point.weight);
+                strokeWeight(point.weight / 2);
                 vertex(point.x / 2 + 320, point.y / 2);
             });
             endShape();
