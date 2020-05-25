@@ -145,6 +145,7 @@ io.on('connection', function (socket) {
         }
     })
     socket.on("getRandomTopic", function() {
+        //suggest a topic
         socket.emit("receivedRandomTopic", sentencer.make("{{ an_adjective }} {{noun}}"))
     })
     socket.on("createGame", function (input, fill) {
@@ -392,6 +393,7 @@ io.on('connection', function (socket) {
 });
 
 function findObjectByKey(array, key, value) {
+    //find an object using key value pair in an array
     for (var i = 0; i < array.length; i++) {
         if (array[i][key] === value) {
             return array[i];
@@ -401,11 +403,13 @@ function findObjectByKey(array, key, value) {
 }
 
 function getRandomInt(min, max) {
+    //random integer
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
 
 function getUniqueGameId() {
+    //generate game id
     var foundId = false
     var id
     while (!foundId) {
@@ -419,6 +423,7 @@ function getUniqueGameId() {
 }
 
 function gameNameTaken(name, game) {
+    //is the provided name taken in a game
     var players = getPlayers(game)
     var names = []
     for (var x = 0; x < players.length; x++) {
@@ -428,6 +433,7 @@ function gameNameTaken(name, game) {
 }
 
 function getPlayers(game) {
+    //returns all players in a game
     var players = []
     players.push(game.judge)
     players.push(game.team1.p1)
@@ -438,14 +444,17 @@ function getPlayers(game) {
 }
 
 function teamFilled(team) {
+    //is the team full
     return !isEmpty(team.p1) && !isEmpty(team.p2);
 }
 
 function isEmpty(obj) {
+    //is an object empty
     return Object.keys(obj).length === 0;
 }
 
 function getGameBySocketId(id) {
+    //gets game by one of player's socket id
     for (var x = 0; x < games.length; x++) {
         var game = games[x]
         var players = getPlayers(game)
@@ -460,6 +469,7 @@ function getGameBySocketId(id) {
 }
 
 function getPlayerById(id) {
+    //gets a player object by socket id
     var game = getGameBySocketId(id)
     if (game) {
         var players = getPlayers(game)
@@ -474,6 +484,7 @@ function getPlayerById(id) {
 }
 
 function gameEmit(game, toEmit, args) {
+    //say to entire game
     var players = getPlayers(game)
     for (var x = 0; x < players.length; x++) {
         if (!isEmpty(players[x])) {
@@ -483,6 +494,7 @@ function gameEmit(game, toEmit, args) {
 }
 
 function objArrayToString(arr) {
+    //only for debug
     var string = "[";
     for (var i = 0; i < arr.length; i++) {
         if (i !== arr.length - 1) {
