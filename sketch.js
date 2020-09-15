@@ -1,8 +1,11 @@
+//================================CLIENT CODE================================\\
+
+
 //declare global variables
 var socket = io(); //needed for socket connection
 var paths = []; //line paths
 let currentPath = []; //current drawing path
-var canvas; //actual p5 canvas
+var canvas; //actual p5 canvas.
 var cnv //p5-declared canvas TODO: figure out if these are the same
 var center = "display: block; margin-right: auto; margin-left: auto;" //"center" style
 var isInCanvas = false;// is the mouse in canvas
@@ -16,7 +19,6 @@ var topic //topic to draw
 var paused //is the game in between drawing sessions
 var firstTime = true //first time in chat
 var joinedGame = false //first time joining game
-
 
 function shouldJoinGame() {
     //called at onload, handles if client has joined from a generated link
@@ -50,10 +52,15 @@ function setup() {
     canvas = document.getElementsByClassName("p5Canvas")[0]
     canvas.style.display = "inline-block"
     background(255)
+    var colorpicker = document.createElement("input")
+    colorpicker.type = "color"
+    colorpicker.id = "colorpicker"
+    colorpicker.value = "000000"
+    document.body.appendChild(colorpicker)
     var chatbox = document.createElement("div")
     chatbox.id = "history"
     chatbox.style.display = "inline-block"
-    var chatboxw = parseInt((window.innerWidth - parseInt(canvas.style.width)) * 0.9)
+    var chatboxw = parseInt((window.innerWidth - parseInt(canvas.style.width)) * 0.8)
     var chatstyle = "display: inline-block; height: " + parseInt(canvas.style.height) * 0.9 + "px; width: " + chatboxw.toString() + "px; float: right; overflow-wrap: break-word;"
     console.log(chatstyle)
     chatbox.setAttribute("style", chatstyle)
@@ -124,6 +131,7 @@ function setup() {
     welcome.innerHTML = "Welcome to Draw Live! If you don't know how to play, click <a href='about.txt' target='_blank'>here</a>."
     document.getElementById("history").appendChild(welcome)
     textAlign(LEFT)
+
 }
 
 function draw() {
@@ -166,7 +174,7 @@ function draw() {
                 const point = {
                     x: mx,
                     y: my,
-                    color: 0,
+                    color: document.getElementById("colorpicker").value,
                     weight: 3
                 };
                 currentPath.push(point);

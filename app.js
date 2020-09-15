@@ -1,5 +1,23 @@
-var app = require('http').createServer(response); //http server module
-var fs = require('fs'); //filesystem module
+/*
+credit to OpenJS Foundation (https://nodejs.org/) for node.js environment
+credit to Kyle Stetz for the Sentencer module (https://kylestetz.github.io/Sentencer/)
+credit to socket.io for the networking module (https://socket.io)
+credit to Processing Foundation and Lauren McCarthy (https://p5js.org/) for p5.js module
+credit to SweetAlert2 for the alert library (https://sweetalert2.github.io/)
+credit to Material Design Lite and Google for the styled elements (https://getmdl.io/)
+credit to The jQuery Foundation for the jQuery all-purpose library (https://jquery.com/)
+ */
+
+
+
+
+//==============================SERVER CODE=====================================\\
+
+
+
+
+var app = require('http').createServer(response); //http server module. part of node.js
+var fs = require('fs'); //filesystem module. part of node.js
 var io = require('socket.io')(app); //socket.io module
 var sentencer = require('sentencer') //for suggesting topics
 var ids = [] //list of socket ids
